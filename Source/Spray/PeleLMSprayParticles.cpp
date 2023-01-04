@@ -230,7 +230,7 @@ PeleLM::SprayInit()
     if (init_function <= 0) {
       init_part = false;
     }
-    ProbParm const* lprobparm = prob_parm;
+    ProbParm *lprobparm = prob_parm;
     theSprayPC()->InitSprayParticles(init_part, *lprobparm);
     SprayPostRegrid();
     SprayInjectRedist();
@@ -457,7 +457,7 @@ PeleLM::SprayInjectRedist()
   bool injected = false;
   for (int lev = 0; lev <= finest_level; ++lev) {
     int nstep = 0; // Unused
-    ProbParm const* lprobparm = prob_parm;
+    ProbParm *lprobparm = prob_parm;
     Real cur_time = m_t_new[lev]; // Still the time from the last time step
     Real dt = m_dt;
     bool lev_injected = theSprayPC()->injectParticles(
