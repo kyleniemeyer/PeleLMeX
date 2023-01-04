@@ -39,7 +39,6 @@ SprayParticleContainer::injectParticles(Real time,
 
       // Geometry data
       const Geometry& geom = this->m_gdb->Geom(lev);
-      const auto plo = geom.ProbLoArray();
       const auto dx = geom.CellSize();
 
       //#######################################################
@@ -84,13 +83,10 @@ SprayParticleContainer::injectParticles(Real time,
       Real part_temp = prob_parm.part_temp;
 
       // Create a distribution
-      /*
       std::unique_ptr<DistBase> dropDist; 
       std::string dist_type = "Weibull";
       dropDist = DistBase::create(dist_type);
       dropDist->init("RosinRammler");
-      */
-      WeibullDist w_dist(prob_parm.rr_mean_diam, prob_parm.rr_k);
 
       // Host container
       amrex::ParticleLocData pld;  
@@ -99,6 +95,7 @@ SprayParticleContainer::injectParticles(Real time,
       // Loop on injectors
       for (int inj = 0; inj < 7; ++inj) {
 
+          int npart_inj = 0;
           // Check how much mass we need to inject, adding leftover from last injection
           Real injection_mass = prob_parm.floating_injection_mass[inj] + mass_flow_rate * dt;
           // Check if we can inject the last particle we draw
@@ -111,9 +108,10 @@ SprayParticleContainer::injectParticles(Real time,
           }
 
           // Injection center
-          RealVect cur_jet_cent {AMREX_D_DECL(plo[0],
-                                              cen_y_swirler[inj],
-                                              cen_z_swirler[inj])};
+          RealVect cur_jet_cent {AMREX_D_DECL(cen_y_swirler[inj],
+                                              cen_z_swirler[inj],
+                                              -1.7e-3)};
+
 
           // Inject mass until we have the desired amount
           amrex::Real total_mass = 0.;
@@ -126,7 +124,7 @@ SprayParticleContainer::injectParticles(Real time,
                  cur_dia = prob_parm.part_dia_saved[inj];
                  prob_parm.part_dia_saved[inj] = -1.0;
               } else {    // Draw a particle
-                 cur_dia = w_dist.get_dia();
+                 cur_dia = dropDist->get_dia();
                  Real pmass = Pi_six * rho_part * std::pow(cur_dia, 3);
                  if ( remaining_mass < pmass ) {  // Don't have enough mass left, store it for later
                      prob_parm.part_dia_saved[inj] = cur_dia;
@@ -145,9 +143,9 @@ SprayParticleContainer::injectParticles(Real time,
 
               // Get the random position on the azimuth [0:2*pi]
               Real inj_p_angle_random = amrex::Random() * 2.0 * M_PI;
-              RealVect part_loc(AMREX_D_DECL(cur_jet_cent[0],
-                                             cur_jet_cent[1] + std::cos(inj_p_angle_random) * inj_p_rad,
-                                             cur_jet_cent[2] + std::sin(inj_p_angle_random) * inj_p_rad));
+              RealVect part_loc(AMREX_D_DECL(cur_jet_cent[0] + std::cos(inj_p_angle_random) * inj_p_rad,
+                                             cur_jet_cent[1] + std::sin(inj_p_angle_random) * inj_p_rad,
+                                             cur_jet_cent[2]));
 
               ParticleType p;
               p.id() = ParticleType::NextID();
@@ -159,9 +157,9 @@ SprayParticleContainer::injectParticles(Real time,
                            Real ut_vel = std::sin(inj_p_alpha) * std::tan(inj_p_theta) * jet_vel);
  
               // Particle velocity in cartesian coordinates
-              AMREX_D_TERM(Real x_vel = jet_vel;,
-                           Real y_vel = -std::sin(inj_p_angle_random) * ut_vel + std::cos(inj_p_angle_random) * ur_vel;,
-                           Real z_vel =  std::cos(inj_p_angle_random) * ut_vel + std::sin(inj_p_angle_random) * ur_vel);
+              AMREX_D_TERM(Real x_vel = -std::sin(inj_p_angle_random) * ut_vel + std::cos(inj_p_angle_random) * ur_vel;,
+                           Real y_vel =  std::cos(inj_p_angle_random) * ut_vel + std::sin(inj_p_angle_random) * ur_vel;,
+                           Real z_vel = ux_vel);
               
               // Particle velocity rms
               AMREX_D_TERM(Real x_vel_rms = jet_vel * (2.0 * amrex::Random() - 1.0) * prob_parm.ps_rmsvel ;,
@@ -184,6 +182,9 @@ SprayParticleContainer::injectParticles(Real time,
               for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
                 p.pos(dir) = part_loc[dir] + pmov * dt * part_vel[dir];
               }
+              Print() << " New part loc "  << part_loc[0] + pmov * dt * part_vel[0]
+                      << ", " << part_loc[1] + pmov * dt * part_vel[1]
+                      << ", " << part_loc[2] + pmov * dt * part_vel[2] << "\n";
 
               p.rdata(pstateT) = part_temp;
               p.rdata(pstateDia) = cur_dia;
@@ -203,7 +204,13 @@ SprayParticleContainer::injectParticles(Real time,
               Real pmass = Pi_six * rho_part * std::pow(cur_dia, 3);
               total_mass += num_ppp * pmass;
               remaining_mass = injection_mass - total_mass;
+              npart_inj +=1;
           }
+
+          Print() << " Adding " << npart_inj << " particles on inj " << inj << " centered: " << cur_jet_cent[0]
+                                                       << ", " << cur_jet_cent[1]
+                                                       << ", " << cur_jet_cent[2] << "\n";
+
       }
       
       // Move particles to level holder
@@ -226,7 +233,8 @@ SprayParticleContainer::injectParticles(Real time,
 }
 
 void
-SprayParticleContainer::InitSprayParticles(ProbParm const& prob_parm)
+SprayParticleContainer::InitSprayParticles(const bool init_parts,
+                                           ProbParm const& prob_parm)
 {
   // This ensures the initial time step size stays reasonable
   // Use a rought guess of the ratio
