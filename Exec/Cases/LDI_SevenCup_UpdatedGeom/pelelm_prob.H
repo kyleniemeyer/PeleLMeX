@@ -234,7 +234,7 @@ bcnormal(
 
   
   amrex::Real Vt=0,Vr=0,Vax=0;            //Velocity variables in local cylindrical coordinates
-  amrex::Real rad=0;		          //Normalised radius
+  amrex::Real rad=0;              //Normalised radius
   amrex::Real theta=0;                    //Calculated in the y-z plane
   constexpr amrex::Real radius_cup=0.010165;//Radius at the venturi plane
 
@@ -248,16 +248,16 @@ bcnormal(
   massfrac[N2_ID] = 0.767;
 
   //Thermo/fluid variables
-  amrex::Real p_cgs = prob_parm.P_mean * 10.0;		//From user input and converting it into cgs unit
+  amrex::Real p_cgs = prob_parm.P_mean * 10.0;     //From user input and converting it into cgs unit
   amrex::Real rho_cgs = 0.0;
   amrex::Real RhoH_temp = 0.0;
-  s_ext[TEMP] = prob_parm.T_mean;			//From user input
+  s_ext[TEMP] = prob_parm.T_mean;         //From user input
   eos.PYT2R(p_cgs, massfrac, s_ext[TEMP], rho_cgs);
-  s_ext[DENSITY] = rho_cgs * 1.0e3;			// CGS -> MKS conversion
+  s_ext[DENSITY] = rho_cgs * 1.0e3;       // CGS -> MKS conversion
   eos.TY2H(s_ext[TEMP], massfrac, RhoH_temp);
   s_ext[RHOH] = RhoH_temp * 1.0e-4 * s_ext[DENSITY];    // CGS -> MKS conversion
 
-  for (int n = 0; n < NUM_SPECIES; n++) 		// Specifying inflow gas composition
+  for (int n = 0; n < NUM_SPECIES; n++)      // Specifying inflow gas composition
   {
      s_ext[FIRSTSPEC+n] = massfrac[n] * s_ext[DENSITY];
   }
@@ -271,14 +271,14 @@ bcnormal(
   {
      
     if(sqrt(std::pow((x[1]-cen_y_swirler[cup_number]),2.0)+pow((x[0]-cen_z_swirler[cup_number]),2.0))<=radius_cup)
-    	{
-         
-	  theta = atan2(x[1]-cen_y_swirler[cup_number],x[2]-cen_z_swirler[cup_number]);
-	  rad = sqrt(std::pow((x[1]-cen_y_swirler[cup_number]),2.0)+pow((x[2]-cen_z_swirler[cup_number]),2.0))/radius_cup;
+    {
+         /*
+          theta = atan2(x[1]-cen_y_swirler[cup_number],x[2]-cen_z_swirler[cup_number]);
+          rad = sqrt(std::pow((x[1]-cen_y_swirler[cup_number]),2.0)+pow((x[2]-cen_z_swirler[cup_number]),2.0))/radius_cup;
           //radius is less than 0.5 pump in fuel Yf = 0.5 else put air
           if(rad<=prob_parm.fuel_injection_max_radius && prob_parm.activate_fuel_injection)
           {
-	     massfrac[O2_ID] = prob_parm.Y_O2_FUEL;
+             massfrac[O2_ID] = prob_parm.Y_O2_FUEL;
              massfrac[N2_ID] = prob_parm.Y_N2_FUEL;
              massfrac[NC12H26_ID] = prob_parm.Y_C12H26_FUEL;
              for (int n = 0; n < NUM_SPECIES; n++)                 // Specifying inflow gas composition
@@ -289,34 +289,35 @@ bcnormal(
 
           if(cup_number==0 and x[2]<=-0.0042 and x[2]>=-0.0045)
           {
-        	  amrex::PrintToFile("Cup2D_0.out")<<time<<"\t"<<x[0]<<" "<<x[1]<<" "<<s_ext[VELX]<<" "<<s_ext[VELY]<<" "<<s_ext[VELZ]<<"\n";
+           amrex::PrintToFile("Cup2D_0.out")<<time<<"\t"<<x[0]<<" "<<x[1]<<" "<<s_ext[VELX]<<" "<<s_ext[VELY]<<" "<<s_ext[VELZ]<<"\n";
           }
           if(cup_number==1 and x[2]<=-0.0042 and x[2]>=-0.0045)
           {
-        	  amrex::PrintToFile("Cup2D_1.out")<<time<<"\t"<<x[0]<<" "<<x[1]<<" "<<s_ext[VELX]<<" "<<s_ext[VELY]<<" "<<s_ext[VELZ]<<"\n";
+           amrex::PrintToFile("Cup2D_1.out")<<time<<"\t"<<x[0]<<" "<<x[1]<<" "<<s_ext[VELX]<<" "<<s_ext[VELY]<<" "<<s_ext[VELZ]<<"\n";
           }
           if(cup_number==2 and x[2]<=-0.0042 and x[2]>=-0.0045)
           {
-        	  amrex::PrintToFile("Cup2D_2.out")<<time<<"\t"<<x[0]<<" "<<x[1]<<" "<<s_ext[VELX]<<" "<<s_ext[VELY]<<" "<<s_ext[VELZ]<<"\n";
+           amrex::PrintToFile("Cup2D_2.out")<<time<<"\t"<<x[0]<<" "<<x[1]<<" "<<s_ext[VELX]<<" "<<s_ext[VELY]<<" "<<s_ext[VELZ]<<"\n";
           }
           if(cup_number==3 and x[2]<=-0.0042 and x[2]>=-0.0045)
           {
-        	  amrex::PrintToFile("Cup2D_3.out")<<time<<"\t"<<x[0]<<" "<<x[1]<<" "<<s_ext[VELX]<<" "<<s_ext[VELY]<<" "<<s_ext[VELZ]<<"\n";
+           amrex::PrintToFile("Cup2D_3.out")<<time<<"\t"<<x[0]<<" "<<x[1]<<" "<<s_ext[VELX]<<" "<<s_ext[VELY]<<" "<<s_ext[VELZ]<<"\n";
           }
           if(cup_number==4 and x[2]<=-0.0042 and x[2]>=-0.0045)
           {
-        	  amrex::PrintToFile("Cup2D_4.out")<<time<<"\t"<<x[0]<<" "<<x[1]<<" "<<s_ext[VELX]<<" "<<s_ext[VELY]<<" "<<s_ext[VELZ]<<"\n";
+           amrex::PrintToFile("Cup2D_4.out")<<time<<"\t"<<x[0]<<" "<<x[1]<<" "<<s_ext[VELX]<<" "<<s_ext[VELY]<<" "<<s_ext[VELZ]<<"\n";
           }
           if(cup_number==5 and x[2]<=-0.0042 and x[2]>=-0.0045)
           {
-        	  amrex::PrintToFile("Cup2D_5.out")<<time<<"\t"<<x[0]<<" "<<x[1]<<" "<<s_ext[VELX]<<" "<<s_ext[VELY]<<" "<<s_ext[VELZ]<<"\n";
+           amrex::PrintToFile("Cup2D_5.out")<<time<<"\t"<<x[0]<<" "<<x[1]<<" "<<s_ext[VELX]<<" "<<s_ext[VELY]<<" "<<s_ext[VELZ]<<"\n";
           }
           if(cup_number==6 and x[2]<=-0.0042 and x[2]>=-0.0045)
           {
-        	  amrex::PrintToFile("Cup2D_6.out")<<time<<"\t"<<x[0]<<" "<<x[1]<<" "<<s_ext[VELX]<<" "<<s_ext[VELY]<<" "<<s_ext[VELZ]<<"\n";
+           amrex::PrintToFile("Cup2D_6.out")<<time<<"\t"<<x[0]<<" "<<x[1]<<" "<<s_ext[VELX]<<" "<<s_ext[VELY]<<" "<<s_ext[VELZ]<<"\n";
           }
+         */
 
-  	}
+   }
   }
 }
 
