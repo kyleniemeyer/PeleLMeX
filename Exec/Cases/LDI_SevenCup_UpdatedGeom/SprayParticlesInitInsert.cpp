@@ -108,10 +108,9 @@ SprayParticleContainer::injectParticles(Real time,
           }
 
           // Injection center
-          RealVect cur_jet_cent {AMREX_D_DECL(cen_y_swirler[inj],
-                                              cen_z_swirler[inj],
-                                              -1.7e-3)};
-
+          RealVect cur_jet_cent {AMREX_D_DECL(cen_z_swirler[inj],
+                                              cen_y_swirler[inj],
+                                              -1.6e-3)};
 
           // Inject mass until we have the desired amount
           amrex::Real total_mass = 0.;
@@ -182,9 +181,6 @@ SprayParticleContainer::injectParticles(Real time,
               for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
                 p.pos(dir) = part_loc[dir] + pmov * dt * part_vel[dir];
               }
-              Print() << " New part loc "  << part_loc[0] + pmov * dt * part_vel[0]
-                      << ", " << part_loc[1] + pmov * dt * part_vel[1]
-                      << ", " << part_loc[2] + pmov * dt * part_vel[2] << "\n";
 
               p.rdata(pstateT) = part_temp;
               p.rdata(pstateDia) = cur_dia;
@@ -206,11 +202,6 @@ SprayParticleContainer::injectParticles(Real time,
               remaining_mass = injection_mass - total_mass;
               npart_inj +=1;
           }
-
-          Print() << " Adding " << npart_inj << " particles on inj " << inj << " centered: " << cur_jet_cent[0]
-                                                       << ", " << cur_jet_cent[1]
-                                                       << ", " << cur_jet_cent[2] << "\n";
-
       }
       
       // Move particles to level holder
