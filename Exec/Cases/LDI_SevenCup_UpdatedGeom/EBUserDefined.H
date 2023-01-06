@@ -7,6 +7,30 @@ using namespace amrex;
 #include <AMReX_ParmParse.H>
 #include <AMReX_EB2.H>
 #include <AMReX_EB2_IF.H>
+
+template <typename T>
+class DevicePtrIF
+    : public GPUable
+{
+public:
+
+    DevicePtrIF(T* a_p) : p(a_p) {}
+
+    AMREX_GPU_HOST_DEVICE
+    Real operator() (AMREX_D_DECL(Real x, Real y, Real z)) const noexcept
+    {
+        return (*p)(AMREX_D_DECL(x,y,z));
+    }
+
+    Real operator() (const RealArray& a) const noexcept
+    {
+        return this->operator() (AMREX_D_DECL(a[0], a[1], a[2]));
+    }
+
+protected:
+    T* p = nullptr;
+};
+
 /*
 void
 EBUserDefined_Working(const Geometry& geom,
@@ -16,20 +40,20 @@ EBUserDefined_Working(const Geometry& geom,
     // ParmParse your geometry parameters
     // --> fixed geometry of the challenge problem
     //Geometric parameters. Default values
-    amrex::Real d_venturi	= 0.013;
-    amrex::Real d_swirlerexit	= 0.02032;
-    amrex::Real d_dump		= 0.076;
+    amrex::Real d_venturi  = 0.013;
+    amrex::Real d_swirlerexit = 0.02032;
+    amrex::Real d_dump     = 0.076;
     amrex::Real d_downstreamvane= 0.0221488;
     amrex::Real d_fuelstembeg   = 0.0067635;
     //amrex::Real d_fuelstemend   = 0.0067635;//0.0019261;
     amrex::Real d_fuelstemend   = 0.0019261;
 
 
-    amrex::Real l_venturi	= 0.0008382;
-    amrex::Real l_swirlercup	= 0.0043688;
+    amrex::Real l_venturi  = 0.0008382;
+    amrex::Real l_swirlercup  = 0.0043688;
     amrex::Real l_downstreamvane= 0.0050552;
     amrex::Real l_fuelstem      = 0.0022605;
-    amrex::Real l_dump		= 0.20;
+    amrex::Real l_dump     = 0.20;
     amrex::Real l_fuelstem_offset = 0.0018014;
 
     amrex::Real cen_x_swirler_0,cen_y_swirler_0,cen_z_swirler_0;
@@ -162,14 +186,14 @@ EBUserDefined_Working(const Geometry& geom,
     auto swirler_6 = amrex::EB2::translate(swirler_0,{AMREX_D_DECL(0,cen_y_swirler_6,cen_z_swirler_6)});
 
     auto polys1 = amrex::EB2::makeIntersection(
-    											swirler_0,VenturiThroat_0,nozzle_trunc_0,
-												swirler_1,VenturiThroat_1,nozzle_trunc_1,
-												swirler_2,VenturiThroat_2,nozzle_trunc_2,
-												swirler_3,VenturiThroat_3,nozzle_trunc_3,
-												swirler_4,VenturiThroat_4,nozzle_trunc_4,
-												swirler_5,VenturiThroat_5,nozzle_trunc_5,
-												swirler_6,VenturiThroat_6,nozzle_trunc_6,
-												Dump);
+                                    swirler_0,VenturiThroat_0,nozzle_trunc_0,
+                                    swirler_1,VenturiThroat_1,nozzle_trunc_1,
+                                    swirler_2,VenturiThroat_2,nozzle_trunc_2,
+                                    swirler_3,VenturiThroat_3,nozzle_trunc_3,
+                                    swirler_4,VenturiThroat_4,nozzle_trunc_4,
+                                    swirler_5,VenturiThroat_5,nozzle_trunc_5,
+                                    swirler_6,VenturiThroat_6,nozzle_trunc_6,
+                                    Dump);
 
     auto polys = amrex::EB2::makeUnion(polys1,exit_conv);
     auto gshop = amrex::EB2::makeShop(polys);
@@ -185,20 +209,20 @@ EBUserDefined(const Geometry& geom,
     // ParmParse your geometry parameters
     // --> fixed geometry of the challenge problem
     //Geometric parameters. Default values
-    amrex::Real d_venturi		= 0.013;
-    amrex::Real d_swirlerexit	= 0.02032;
-    amrex::Real d_dump			= 0.076;
+    amrex::Real d_venturi     = 0.013;
+    amrex::Real d_swirlerexit = 0.02032;
+    amrex::Real d_dump        = 0.076;
     amrex::Real d_downstreamvane= 0.0221488;
     amrex::Real d_fuelstembeg   = 0.0067635;
     amrex::Real d_fuelstemend   = 0.0019261;
-    
 
-    amrex::Real l_venturi			= 0.0008382;
-    amrex::Real l_swirlercup		= 0.0043688;
-    amrex::Real l_downstreamvane	= 0.0050552;
-    amrex::Real l_fuelstem      	= 0.0022605;
-    amrex::Real l_dump				= 0.20;
-    amrex::Real l_fuelstem_offset 	= 0.0018014;
+
+    amrex::Real l_venturi        = 0.0008382;
+    amrex::Real l_swirlercup     = 0.0043688;
+    amrex::Real l_downstreamvane = 0.0050552;
+    amrex::Real l_fuelstem       = 0.0022605;
+    amrex::Real l_dump           = 0.20;
+    amrex::Real l_fuelstem_offset   = 0.0018014;
 
     amrex::Real cen_x_swirler_0,cen_y_swirler_0,cen_z_swirler_0;
     amrex::Real cen_x_swirler_1,cen_y_swirler_1,cen_z_swirler_1;
@@ -215,7 +239,7 @@ EBUserDefined(const Geometry& geom,
     cen_z_swirler_4 = l_venturi*0.499+l_swirlercup*0.499;  cen_y_swirler_4 = 0.011904858869; cen_x_swirler_4 = -0.020620105463;
     cen_z_swirler_5 = l_venturi*0.499+l_swirlercup*0.499;  cen_y_swirler_5 = 0.02380996; cen_x_swirler_5 = 0.0;
     cen_z_swirler_6 = l_venturi*0.499+l_swirlercup*0.499;  cen_y_swirler_6 = 0.011904858869; cen_x_swirler_6 = 0.020620105463;
- 
+
 
     amrex::ParmParse pp("eb2");
     pp.query("d_venturi", d_venturi);
@@ -311,16 +335,39 @@ EBUserDefined(const Geometry& geom,
     auto nozzle_trunc_5 = amrex::EB2::translate(nozzle_trunc_0,{AMREX_D_DECL(cen_x_swirler_5,cen_y_swirler_5,0)});
     auto nozzle_trunc_6 = amrex::EB2::translate(nozzle_trunc_0,{AMREX_D_DECL(cen_x_swirler_6,cen_y_swirler_6,0)});
 
+    using IF_t = decltype(swirler_0);
+    IF_t* sw0p = (IF_t*)The_Arena()->alloc(sizeof(swirler_0));
+
+#ifdef AMREX_USE_GPU
+    Gpu::htod_memcpy_async(sw0p, &swirler_0, sizeof(IF_t));
+    Gpu::streamSynchronize();
+#else
+    std::memcpy(sw0p, &swirler_0, sizeof(IF_t));
+#endif
+    DevicePtrIF<IF_t> sw0p_dp{sw0p};
+
     auto polys1 = amrex::EB2::makeIntersection(
-        											swirler_0,VenturiThroat_0,nozzle_trunc_0,
-    												swirler_1,VenturiThroat_1,nozzle_trunc_1,
-    												swirler_2,VenturiThroat_2,nozzle_trunc_2,
-    												swirler_3,VenturiThroat_3,nozzle_trunc_3,
-    												swirler_4,VenturiThroat_4,nozzle_trunc_4,
-    												swirler_5,VenturiThroat_5,nozzle_trunc_5,
-    												swirler_6,VenturiThroat_6,nozzle_trunc_6,
-    												Dump);
-    auto polys = amrex::EB2::makeUnion(polys1,exit_conv);
+                                       sw0p_dp,VenturiThroat_0,nozzle_trunc_0,
+                                       swirler_1,VenturiThroat_1,nozzle_trunc_1,
+                                       swirler_2,VenturiThroat_2,nozzle_trunc_2,
+                                       swirler_3,VenturiThroat_3,nozzle_trunc_3,
+                                       swirler_4,VenturiThroat_4,nozzle_trunc_4,
+                                       swirler_5,VenturiThroat_5,nozzle_trunc_5,
+                                       swirler_6,VenturiThroat_6,nozzle_trunc_6,
+                                       Dump);
+
+    using IF2_t = decltype(polys1);
+    IF2_t* dp = (IF2_t*)The_Arena()->alloc(sizeof(polys1));
+
+#ifdef AMREX_USE_GPU
+    Gpu::htod_memcpy_async(dp, &polys1, sizeof(IF2_t));
+    Gpu::streamSynchronize();
+#else
+    std::memcpy(dp, &polys1, sizeof(IF2_t));
+#endif
+    DevicePtrIF<IF2_t> poly_dp{dp};
+
+    auto polys = amrex::EB2::makeUnion(poly_dp,exit_conv);
 
     //auto polys = amrex::EB2::makeUnion(polys1,exit_conv);
     auto gshop = amrex::EB2::makeShop(polys);
