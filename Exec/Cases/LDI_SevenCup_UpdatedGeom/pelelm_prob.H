@@ -236,8 +236,10 @@ bcnormal(
   amrex::Real Vt=0,Vr=0,Vax=0;            //Velocity variables in local cylindrical coordinates
   amrex::Real rad=0;              //Normalised radius
   amrex::Real theta=0;                    //Calculated in the y-z plane
-  constexpr amrex::Real radius_cup=0.010165;//Radius at the venturi plane
 
+  constexpr amrex::Real radius_cup_min=0.00337055;//Radius at the venturi plane
+  constexpr amrex::Real radius_cup_max=0.010165;//Radius at the venturi plane
+   
   //Center locations of all cups. I have taken it from the CAD file rather than calculating it in the code.
   amrex::Real cen_y_swirler[7] = {0.0,-0.011904858869,-0.02380996,-0.011904858869,0.011904858869,0.02380996,0.011904858869};
   amrex::Real cen_z_swirler[7] = {0.0,0.020620105463,0.0,-0.020620105463,-0.020620105463,0.0,0.020620105463};
@@ -269,12 +271,12 @@ bcnormal(
   //Specifying velocity profiles on all cups
   for(int cup_number=0;cup_number<7;cup_number++)
   {
+	  amrex::Real radius=sqrt(std::pow((x[1]-cen_y_swirler[cup_number]),2.0)+pow((x[0]-cen_z_swirler[cup_number]),2.0));
      
-    if(sqrt(std::pow((x[1]-cen_y_swirler[cup_number]),2.0)+pow((x[0]-cen_z_swirler[cup_number]),2.0))<=radius_cup)
+    if(radius<=radius_cup_max and radius>=radius_cup_min)
     {
-         /*
           theta = atan2(x[1]-cen_y_swirler[cup_number],x[2]-cen_z_swirler[cup_number]);
-          rad = sqrt(std::pow((x[1]-cen_y_swirler[cup_number]),2.0)+pow((x[2]-cen_z_swirler[cup_number]),2.0))/radius_cup;
+          rad = sqrt(std::pow((x[1]-cen_y_swirler[cup_number]),2.0)+pow((x[2]-cen_z_swirler[cup_number]),2.0))/radius_cup_max;
           //radius is less than 0.5 pump in fuel Yf = 0.5 else put air
           if(rad<=prob_parm.fuel_injection_max_radius && prob_parm.activate_fuel_injection)
           {
@@ -286,37 +288,13 @@ bcnormal(
                   s_ext[FIRSTSPEC+n] = massfrac[n] * s_ext[DENSITY];
              }              
           }
-
-          if(cup_number==0 and x[2]<=-0.0042 and x[2]>=-0.0045)
+	  //Based on Lucas' suggestion to remove high velocity values
+          if(radius>=0.98*radius_cup_max or radius<=1.02*radius_cup_min)
           {
-           amrex::PrintToFile("Cup2D_0.out")<<time<<"\t"<<x[0]<<" "<<x[1]<<" "<<s_ext[VELX]<<" "<<s_ext[VELY]<<" "<<s_ext[VELZ]<<"\n";
+                s_ext[VELX] = 0.0;
+                s_ext[VELY] = 0.0;
+                s_ext[VELZ] = 0.0;
           }
-          if(cup_number==1 and x[2]<=-0.0042 and x[2]>=-0.0045)
-          {
-           amrex::PrintToFile("Cup2D_1.out")<<time<<"\t"<<x[0]<<" "<<x[1]<<" "<<s_ext[VELX]<<" "<<s_ext[VELY]<<" "<<s_ext[VELZ]<<"\n";
-          }
-          if(cup_number==2 and x[2]<=-0.0042 and x[2]>=-0.0045)
-          {
-           amrex::PrintToFile("Cup2D_2.out")<<time<<"\t"<<x[0]<<" "<<x[1]<<" "<<s_ext[VELX]<<" "<<s_ext[VELY]<<" "<<s_ext[VELZ]<<"\n";
-          }
-          if(cup_number==3 and x[2]<=-0.0042 and x[2]>=-0.0045)
-          {
-           amrex::PrintToFile("Cup2D_3.out")<<time<<"\t"<<x[0]<<" "<<x[1]<<" "<<s_ext[VELX]<<" "<<s_ext[VELY]<<" "<<s_ext[VELZ]<<"\n";
-          }
-          if(cup_number==4 and x[2]<=-0.0042 and x[2]>=-0.0045)
-          {
-           amrex::PrintToFile("Cup2D_4.out")<<time<<"\t"<<x[0]<<" "<<x[1]<<" "<<s_ext[VELX]<<" "<<s_ext[VELY]<<" "<<s_ext[VELZ]<<"\n";
-          }
-          if(cup_number==5 and x[2]<=-0.0042 and x[2]>=-0.0045)
-          {
-           amrex::PrintToFile("Cup2D_5.out")<<time<<"\t"<<x[0]<<" "<<x[1]<<" "<<s_ext[VELX]<<" "<<s_ext[VELY]<<" "<<s_ext[VELZ]<<"\n";
-          }
-          if(cup_number==6 and x[2]<=-0.0042 and x[2]>=-0.0045)
-          {
-           amrex::PrintToFile("Cup2D_6.out")<<time<<"\t"<<x[0]<<" "<<x[1]<<" "<<s_ext[VELX]<<" "<<s_ext[VELY]<<" "<<s_ext[VELZ]<<"\n";
-          }
-         */
-
    }
   }
 }
