@@ -34,7 +34,7 @@ prob.l_venturi           = 0.0008382
 prob.l_swirlercup        = 0.0043688
 prob.l_dump              = 0.20
 
-prob.mass_flow_rate = 0.001
+prob.mass_flow_rate = 0.007
 prob.spray_temp = 300.0
 #prob.spray_start_time = 1.0e-05
 prob.pressure_swirl_theta = 31.0
