@@ -268,6 +268,10 @@ bcnormal(
   s_ext[VELY] = 0.0;
   s_ext[VELZ] = 0.0;*/
 
+  if (s_ext[VELZ] < 0.0 ) {
+    s_ext[VELZ] = 0.0;
+  }
+
   //Specifying velocity profiles on all cups
   for(int cup_number=0;cup_number<7;cup_number++)
   {
@@ -277,18 +281,7 @@ bcnormal(
     {
           theta = atan2(x[1]-cen_y_swirler[cup_number],x[2]-cen_z_swirler[cup_number]);
           rad = sqrt(std::pow((x[1]-cen_y_swirler[cup_number]),2.0)+pow((x[2]-cen_z_swirler[cup_number]),2.0))/radius_cup_max;
-          //radius is less than 0.5 pump in fuel Yf = 0.5 else put air
-          if(rad<=prob_parm.fuel_injection_max_radius && prob_parm.activate_fuel_injection)
-          {
-             massfrac[O2_ID] = prob_parm.Y_O2_FUEL;
-             massfrac[N2_ID] = prob_parm.Y_N2_FUEL;
-             massfrac[NC12H26_ID] = prob_parm.Y_C12H26_FUEL;
-             for (int n = 0; n < NUM_SPECIES; n++)                 // Specifying inflow gas composition
-             {
-                  s_ext[FIRSTSPEC+n] = massfrac[n] * s_ext[DENSITY];
-             }              
-          }
-	  //Based on Lucas' suggestion to remove high velocity values
+	       //Based on Lucas' suggestion to remove high velocity values
           if(radius>=0.98*radius_cup_max or radius<=1.02*radius_cup_min)
           {
                 s_ext[VELX] = 0.0;
@@ -313,5 +306,12 @@ zero_visc (int i, int j, int k,
      amrex::ignore_unused(i,j,k,beta,geomdata,domainBox,dir,beta_comp,nComp);
     // We treat species when beta_comp == 0 and nComp == NUM_SPECIES
     // otherwise this routine could be called for other face diffusivity (Temp, velocity, ...)
+    if ( (beta_comp == 0) && (nComp == NUM_SPECIES) ) {
+        if (dir == 2 && j <= domainBox.smallEnd(dir)) {
+            for (int n = beta_comp; n < beta_comp + nComp; n++) {
+               beta(i,j,k,n) = 0.0;
+            }
+        }
+    }
 }
 #endif
