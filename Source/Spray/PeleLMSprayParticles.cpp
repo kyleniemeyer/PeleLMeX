@@ -342,6 +342,50 @@ PeleLM::SprayAddSource(const int level)
     MultiFab::Add(
       extsource, source, scomps.specSrcIndx + n, dstcomp, 1, eghosts);
   }
+
+//----------------------------------------------------------------------------
+// Some necessary hacking at the moment
+//----------------------------------------------------------------------------
+#ifdef AMREX_USE_EB
+   auto const& ebfact = EBFactory(level);
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+  for (MFIter mfi(*m_extSource[level],TilingIfNotGPU()); mfi.isValid(); ++mfi)
+  {
+     const Box& bx = mfi.tilebox();
+     auto const& flagfab = ebfact.getMultiEBCellFlagFab()[mfi];
+     auto const& flag    = flagfab.const_array();
+     auto const& vfrac   = ebfact.getVolFrac().const_array(mfi);
+     auto const& momSrc = m_extSource[level]->array(mfi,VELX);
+     auto const& rhoSrc = m_extSource[level]->array(mfi,DENSITY);
+     auto const& rhoHSrc = m_extSource[level]->array(mfi,RHOH);
+     auto const& rhoYfuelSrc = m_extSource[level]->array(mfi,scomps.specIndx + sprayData.indx[0]);
+     //amrex::ParallelFor(bx, [rhoSrc,rhoHSrc,rhoYfuelSrc]
+     //AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+     //{
+     //   fabMinMax( i, j, k, 1, -10.0, 5.0e3, rhoSrc);
+     //   fabMinMax( i, j, k, 1, -10.0, 5.0e3, rhoYfuelSrc);
+     //   fabMinMax( i, j, k, 1, -5e9, 5.0e6, rhoHSrc);
+     //});
+     if (flagfab.getType(bx) == FabType::singlevalued) {
+        amrex::ParallelFor(bx, [momSrc,rhoSrc,rhoHSrc,rhoYfuelSrc,vfrac]
+        AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+        {
+           // Cut spray sources in mostly covered cells
+           if ( vfrac(i,j,k) < 0.9 ) {
+               momSrc(i,j,k,0) = 0.0;
+               momSrc(i,j,k,1) = 0.0;
+               momSrc(i,j,k,2) = 0.0;
+               rhoSrc(i,j,k) = 0.0;
+               rhoYfuelSrc(i,j,k) = 0.0;
+               rhoHSrc(i,j,k) = 0.0;
+           }
+        });
+     }
+  }
+#endif
 }
 
 void
