@@ -1,0 +1,42 @@
+diff --git a/Source/PP_Spray/SprayParticles.cpp b/Source/PP_Spray/SprayParticles.cpp
+index 1f4b22f..213ecfd 100644
+--- a/Source/PP_Spray/SprayParticles.cpp
++++ b/Source/PP_Spray/SprayParticles.cpp
+@@ -153,7 +153,7 @@ SprayParticleContainer::updateParticles(
+   MultiFab& state,
+   MultiFab& source,
+   const Real& flow_dt,
+-  const Real& /*time*/,
++  const Real& time,
+   const int state_ghosts,
+   const int source_ghosts,
+   const bool isVirt,
+@@ -321,6 +321,9 @@ SprayParticleContainer::updateParticles(
+             indx_array.data(), weights.data());
+           // Solve for avg mw and pressure at droplet location
+           gpv.define();
++          amrex::Real T_part = p.rdata(SprayComps::pstateT);
++          amrex::Real dia_part = p.rdata(SprayComps::pstateDia);
++          Print() << "TrackP  " << time << " " << dia_part << " " << T_part << " " << gpv.T_fluid << " " << gpv.Y_fluid[0] << "\n";
+           calculateSpraySource(cur_dt, gpv, *fdat, p, ltransparm);
+           for (int aindx = 0; aindx < AMREX_D_PICK(2, 4, 8); ++aindx) {
+             IntVect cur_indx = indx_array[aindx];
+diff --git a/Source/PP_Spray/SpraySetup.cpp b/Source/PP_Spray/SpraySetup.cpp
+index 77ae18f..b4adc48 100644
+--- a/Source/PP_Spray/SpraySetup.cpp
++++ b/Source/PP_Spray/SpraySetup.cpp
+@@ -106,6 +106,14 @@ SprayParticleContainer::readSprayParams(
+   // Set the number of particles per parcel
+   //
+   pp.query("parcel_size", parcel_size);
++
++  // Hack in order to keep the mass loading constant as droplet diam and density change
++  amrex::ParmParse ppp("prob");
++  amrex::Real diam = 0.0;
++  ppp.get("dia_drop", diam); 
++  Real scaled_ppp = parcel_size * (std::pow(1e-4,3.0)*700)/(std::pow(diam,3.0)*sprayrho[0]);  
++  parcel_size = scaled_ppp;
++  
+   pp.query("use_splash_model", splash_model);
+   if (splash_model) {
+     Abort("Splash model is not fully implemented");

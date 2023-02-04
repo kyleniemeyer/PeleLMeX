@@ -1,0 +1,96 @@
+#----------------------DOMAIN DEFINITION------------------------
+geometry.is_periodic = 1 0 1               # For each dir, 0: non-perio, 1: periodic
+geometry.coord_sys   = 0                  # 0 => cart, 1 => RZ
+geometry.prob_lo     = 0.0 0.0 0.0        # x_lo y_lo (z_lo)
+geometry.prob_hi     = 0.04 0.02 0.0        # x_hi y_hi (z_hi)
+
+# >>>>>>>>>>>>>  BC FLAGS <<<<<<<<<<<<<<<<
+# Interior, Inflow, Outflow, Symmetry,
+# SlipWallAdiab, NoSlipWallAdiab, SlipWallIsotherm, NoSlipWallIsotherm
+peleLM.lo_bc = Interior Outflow Interior
+peleLM.hi_bc = Interior Outflow Interior
+
+#-------------------------AMR CONTROL----------------------------
+amr.n_cell          = 32 16 16      # Level 0 number of cells in each direction   
+amr.v               = 1                # AMR verbose
+amr.max_level       = 0                # maximum level number allowed
+amr.regrid_int      = -1                # how often to regrid
+amr.n_error_buf     = 1 1 2 2          # number of buffer cells in error est
+amr.grid_eff        = 0.7              # what constitutes an efficient grid
+amr.ref_ratio = 2 2 2
+
+amr.blocking_factor = 16               # block factor in grid generation (min box size)
+amr.max_grid_size   = 128               # max box size
+
+#--------------------------- Problem -------------------------------
+prob.P_mean  = 2026500.
+prob.T_gas   = 700.
+prob.vel_gas = 1.
+
+prob.T_drop = 300.
+prob.dia_drop = 5.E-5
+prob.vel_drop = 0. 0. 0.
+prob.Re_drop = 5.0
+prob.drop_loc = 0.02 0.01 0.
+
+prob.final_tau_p = 6.0
+
+#-------------------------PeleLM CONTROL----------------------------
+peleLM.v = 1
+peleLM.incompressible = 0
+peleLM.use_wbar = 1
+peleLM.sdc_iterMax = 2
+peleLM.floor_species = 0
+
+peleLM.do_temporals = 1
+peleLM.temporal_int = 1
+peleLM.mass_balance = 1
+peleLM.do_extremas = 1
+peleLM.num_init_iter = 0
+
+amr.plot_per = 5.0E-4
+
+amr.dt_shrink = 1.
+amr.max_step = 10000
+amr.stop_time = 0.5
+#amr.init_dt = 0.0000001
+amr.cfl = 0.01
+amr.derive_plot_vars = avg_pressure mag_vort mass_fractions
+
+# --------------- INPUTS TO CHEMISTRY REACTOR ---------------
+peleLM.chem_integrator = "ReactorNull"
+
+mac_proj.verbose = 0
+nodal_proj.verbose = 0
+
+#--------------------SPRAY PARTICLE DATA-----------------------
+peleLM.do_spray_particles = 1
+particles.derive_plot_vars = 0
+particles.fuel_species = NC12H26
+# Properties for decane, in MKS
+particles.fuel_crit_temp = 617.8 # K
+particles.fuel_boil_temp = 447.27 # K
+particles.fuel_ref_temp = 298.15
+particles.fuel_latent = 3.5899E5
+particles.fuel_cp = 2.1921E3 # Cp at 298 K
+particles.fuel_rho = 640.
+# Coefficients for saturation pressure using Antoine equation
+# These are from the NIST website
+# Last coefficient converts units, in this case bar, to Pa
+particles.NC12H26_psat = 4.07857 1501.268 -78.67 1.E5
+
+particles.use_splash_model = false
+particles.init_function = 1
+
+particles.v             = 0
+particles.fixed_parts   = 1 # To fix the particle in space
+particles.mom_transfer  = 1
+particles.mass_transfer = 1
+particles.cfl           = 2.
+particles.write_ascii_files = 0
+particles.parcel_size = 15000.
+
+amrex.regtest_reduction=1
+amrex.fpe_trap_invalid = 1
+amrex.fpe_trap_zero = 1
+amrex.fpe_trap_overflow = 1
