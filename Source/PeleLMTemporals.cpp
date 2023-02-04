@@ -519,6 +519,13 @@ void PeleLM::writeTemporals()
    auto stateMin  = ( m_incompressible ) ? MLmin(GetVecOfConstPtrs(getStateVect(AmrNewTime)),0,AMREX_SPACEDIM)
                                          : MLmin(GetVecOfConstPtrs(getStateVect(AmrNewTime)),0,NVAR);
 
+   if (stateMin[TEMP] < m_TempMin) {
+      m_TempMin = stateMin[TEMP];
+   }
+   if (stateMax[FIRSTSPEC]/stateMax[DENSITY] > m_FuelMax) {
+      m_FuelMax = stateMax[FIRSTSPEC]/stateMax[DENSITY];
+   }
+
    tmpExtremasFile << m_nstep << " " << m_cur_time;           // Time
    for (int n = 0; n < stateMax.size(); ++n) {                // Min & max of each state variable
        tmpExtremasFile << " " << stateMin[n] << " " << stateMax[n];

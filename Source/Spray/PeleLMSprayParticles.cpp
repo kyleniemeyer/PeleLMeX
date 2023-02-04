@@ -476,4 +476,16 @@ PeleLM::SprayInjectRedist()
   }
 }
 
+
+amrex::Real
+PeleLM::getPPP()
+{
+    return sprayData.num_ppp;
+}
+
+void
+PeleLM::setPPP(amrex::Real &a_ppp)
+{
+    sprayData.num_ppp = a_ppp;
+}
 #endif

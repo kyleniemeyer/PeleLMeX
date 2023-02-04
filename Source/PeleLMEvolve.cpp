@@ -92,6 +92,11 @@ void PeleLM::Evolve() {
 
    }
 
+   Print() << "EVAP_INFO tau_p " << m_tau_p 
+           << " St " << m_tau_p / m_tau_g 
+           << " TMin " << m_TempMin
+           << " YfMax " << m_FuelMax << "\n";
+
    if (m_verbose > 0) {
       amrex::Print() << "\n >> Final simulation time: " << m_cur_time << "\n";
    }

@@ -178,6 +178,36 @@ void PeleLM::initData() {
       initialRedistribution();
 #endif
 
+      fillPatchState(AmrNewTime);
+
+      // HACK for evap case:
+      // -> Set u_gas from Re_p, d_p and nu
+      // -> 
+      calcViscosity(AmrNewTime);
+      Real mu_gas = m_leveldata_new[0]->visc_cc.max(0,0,false);
+      Real rho_gas = m_leveldata_new[0]->state.max(DENSITY,0,false);
+      Real u_gas = prob_parm->Re_drop * mu_gas / rho_gas / prob_parm->dia_drop;
+      Print() << " u_gas: " << u_gas << "\n";
+
+      ParmParse ppl("particles");
+      Real rhoL = 0.0;
+      ppl.get("fuel_rho",rhoL);
+      Real tau_p_star = rhoL * prob_parm->dia_drop * prob_parm->dia_drop / (18.0*mu_gas);
+      Real tau_p = tau_p_star / (1.0 + 0.15 * std::pow(prob_parm->Re_drop,0.687));
+      Print() << " tau_p " << tau_p << "\n";
+      m_tau_p = tau_p;
+
+      Real tau_g = 0.333*(Geom(0).ProbHi(0) - Geom(0).ProbLo(0)) / u_gas;
+      Print() << " tau_g " << tau_g << "\n";
+      m_tau_g = tau_g;
+
+      ParmParse ppp("prob");
+      Real nTauP = 1.0;
+      ppp.get("final_tau_p",nTauP);
+
+      m_stop_time = nTauP * tau_p;
+      m_fixed_dt = m_stop_time / 1000.0;
+
       //----------------------------------------------------------------
       // AverageDown and FillPatch the NewState
       averageDownState(AmrNewTime);

@@ -121,6 +121,9 @@ class PeleLM : public amrex::AmrCore {
 
    // SprayRestart
    void SprayRestart(const std::string& restart_file);
+
+   amrex::Real getPPP();
+   void setPPP(amrex::Real &a_ppp);
 #endif
 
    // VariablesSetup
@@ -1228,6 +1231,10 @@ class PeleLM : public amrex::AmrCore {
    int m_do_massBalance = 0;
    int m_do_energyBalance = 0;
    int m_do_speciesBalance = 0;
+   amrex::Real m_TempMin = 10000.0;
+   amrex::Real m_FuelMax = -1.0;
+   amrex::Real m_tau_p = -1.0;
+   amrex::Real m_tau_g = -1.0;
    amrex::Real m_massOld;
    amrex::Real m_massNew;
    amrex::Real m_RhoHOld;
