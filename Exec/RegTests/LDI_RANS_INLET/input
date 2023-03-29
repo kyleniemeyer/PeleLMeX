@@ -1,0 +1,4 @@
+hit_file = LDI_RANS_INLET1.dat 
+input_ncell = 100 
+urms0 = 1.0
+TurbFile = TurbTEST1
