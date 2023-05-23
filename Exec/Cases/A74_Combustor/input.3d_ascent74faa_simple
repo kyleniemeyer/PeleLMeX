@@ -1,0 +1,119 @@
+#----------------------DOMAIN DEFINITION------------------------
+geometry.is_periodic = 0 0 0               # For each dir, 0: non-perio, 1: periodic
+geometry.coord_sys   = 0                  # 0 => cart, 1 => RZ
+geometry.prob_lo     = 0.7886565 -0.0672465 -0.0672465        # x_lo y_lo (z_lo)
+geometry.prob_hi     = 1.3266285  0.0672465  0.0672465        # x_hi y_hi (z_hi)
+
+#dx (for 64 elements across sq side) = 2.101453125e-3, L = 0.537972
+# >>>>>>>>>>>>>  BC FLAGS <<<<<<<<<<<<<<<<
+# Interior, Inflow, Outflow, Symmetry,
+# SlipWallAdiab, NoSlipWallAdiab, SlipWallIsotherm, NoSlipWallIsotherm
+peleLM.lo_bc = Inflow NoSlipWallAdiab NoSlipWallAdiab
+peleLM.hi_bc = Outflow NoSlipWallAdiab NoSlipWallAdiab 
+
+
+#-------------------------AMR CONTROL----------------------------
+amr.n_cell          = 256 64 64      # Level 0 number of cells in each direction   
+amr.v               = 1                # AMR verbose
+amr.max_level       = 3                # maximum level number allowed
+amr.ref_ratio       = 2 2 2 2 2        # refinement ratio
+amr.regrid_int      = 5                # how often to regrid
+amr.n_error_buf     = 2 2 2 2          # number of buffer cells in error est
+amr.grid_eff        = 0.95             # what constitutes an efficient grid
+amr.blocking_factor = 16               # block factor in grid generation (min box size)~ 16 is better
+amr.max_grid_size   = 64               # max box size
+
+#--------------------------- Problem -------------------------------
+prob.P_mean = 2000000.0
+prob.T_mean = 600.0
+
+prob.d_venturi      = 0.02033
+prob.d_swirlerexit  = 0.02032
+prob.d_dump         = 0.076
+
+prob.l_venturi      = 0.0008382
+prob.l_swirlercup   = 0.0043688
+prob.l_dump         = 0.20
+
+#-------------------------PeleLM CONTROL----------------------------
+peleLM.v = 3
+peleLM.incompressible = 0
+peleLM.rho = 1.17
+peleLM.mu = 0.0
+peleLM.use_wbar = 1
+peleLM.sdc_iterMax = 2
+peleLM.floor_species = 0
+peleLM.num_divu_iter = 1
+peleLM.num_init_iter = 2
+
+peleLM.do_temporals = 1
+peleLM.do_mass_balance = 1
+
+#amr.restart = chk00100
+amr.check_int = 100
+amr.plot_int = 100
+amr.max_step = 10
+amr.dt_shrink = 0.1
+amr.stop_time = 1.0
+#amr.stop_time = 1.00
+amr.init_dt = 1.0e-5
+amr.cfl = 0.7
+amr.derive_plot_vars = avg_pressure mag_vort mass_fractions derUserDefined Qcrit
+
+# --------------- INPUTS TO CHEMISTRY REACTOR ---------------
+peleLM.chem_integrator = "ReactorNull"
+#peleLM.use_typ_vals_chem = 1          # Use species/temp typical values in CVODE
+#ode.rtol = 1.0e-8                     # Relative tolerance of the chemical solve
+#ode.atol = 1.0e-6                     # Absolute tolerance factor applied on typical values
+#ode.clean_init_massfrac = 0
+#cvode.solve_type = magma_direct       # CVODE Linear solve type (for Newton direction) 
+#cvode.max_order  = 4                  # CVODE max BDF order. 
+
+#--------------------------- Turbulence -------------------------------
+# NOTE: the centers must be consistent with the injection data provided
+# above.
+
+#------------------------- EB SETUP -----------------------------
+eb2.geom_type = UserDefined
+eb2.geom_version = "Simple"
+eb2.small_volfrac = 1.e-6
+eb2.maxiter = 1000
+eb2.num_coarsen_opt=2
+peleLM.refine_EB_type = Static
+peleLM.refine_EB_max_level = 1 
+peleLM.refine_EB_buffer = 2.0
+
+#--------------------REFINEMENT CONTROL------------------------
+amr.refinement_indicators = magVort tagJets
+amr.magVort.max_level     = 2
+amr.magVort.value_greater = 5000.0 
+amr.magVort.field_name    = mag_vort
+
+amr.tagJets.max_level     = 3
+amr.tagJets.value_greater = 0.5
+amr.tagJets.field_name    = tagCoolingJets
+
+#peleLM.diagnostics = xnormal ynormal
+#peleLM.xnormal.type = DiagFramePlane
+#peleLM.xnormal.file = centXPlane
+#peleLM.xnormal.normal = 0 
+#peleLM.xnormal.center = 0.0
+#peleLM.xnormal.int    = 10
+#peleLM.xnormal.interpolation = Linear
+#peleLM.ynormal.type = DiagFramePlane
+#peleLM.ynormal.file = centYPlane
+#peleLM.ynormal.normal = 1 
+#peleLM.ynormal.center = 0.0
+#peleLM.ynormal.int    = 10
+#peleLM.ynormal.interpolation = Linear
+
+mac_proj.verbose = 1                        # [OPT, DEF=0] Verbose of the MAC projector
+
+#--------------------LINEAR SOLVER CONTROL------------------------
+nodal_proj.verbose = 1
+
+amrex.abort_on_out_of_gpu_memory = 1
+
+#amrex.fpe_trap_invalid = 1
+#amrex.fpe_trap_zero = 1
+#amrex.fpe_trap_overflow = 1
