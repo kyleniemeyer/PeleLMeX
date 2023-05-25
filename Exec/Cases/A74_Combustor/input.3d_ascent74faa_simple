@@ -15,7 +15,7 @@ peleLM.hi_bc = NoSlipWallAdiab NoSlipWallAdiab Outflow
 #-------------------------AMR CONTROL----------------------------
 amr.n_cell          = 64 64 256      # Level 0 number of cells in each direction   
 amr.v               = 1                # AMR verbose
-amr.max_level       = 1                # maximum level number allowed
+amr.max_level       = 3                # maximum level number allowed
 amr.ref_ratio       = 2 2 2 2 2        # refinement ratio
 amr.regrid_int      = 5                # how often to regrid
 amr.n_error_buf     = 2 2 2 2          # number of buffer cells in error est
@@ -52,7 +52,7 @@ peleLM.do_mass_balance = 1
 #amr.restart = chk00100
 amr.check_int = 100
 amr.plot_int = 100
-amr.max_step = 10
+amr.max_step = 0
 amr.dt_shrink = 0.1
 amr.stop_time = 1.0
 #amr.stop_time = 1.00
@@ -131,18 +131,23 @@ eb2.small_volfrac = 1.e-6
 eb2.maxiter = 1000
 eb2.num_coarsen_opt=2
 peleLM.refine_EB_type = Static
-peleLM.refine_EB_max_level = 1 
+peleLM.refine_EB_max_level = 0
 peleLM.refine_EB_buffer = 2.0
 
 #--------------------REFINEMENT CONTROL------------------------
-amr.refinement_indicators = magVort tagJets 
+amr.refinement_indicators = magVort tagJets boxInflows
 amr.magVort.max_level     = 2
 amr.magVort.value_greater = 5000.0 
 amr.magVort.field_name    = mag_vort
 
-amr.tagJets.max_level     = 3
+amr.tagJets.max_level     = 2
 amr.tagJets.value_greater = 0.5
 amr.tagJets.field_name    = tagCoolingJets
+
+amr.boxInflows.max_level     = 1
+amr.boxInflows.in_box_lo = -0.02 -0.02 0.7886565
+amr.boxInflows.in_box_hi = 0.02 0.02 0.790
+
 
 #peleLM.diagnostics = xnormal ynormal
 #peleLM.xnormal.type = DiagFramePlane
