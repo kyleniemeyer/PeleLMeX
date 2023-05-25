@@ -48,7 +48,7 @@ locate(const amrex::Real* xtable, const int n, const amrex::Real& x, int& idxlo)
         idxlo = idxmid;
       } else {
         idxhi = idxmid;
-      }   
+      }
     }
   }
 }
@@ -148,7 +148,7 @@ Get_Axial_Velocity(amrex::Real rad)
    {
       Vax = -1017.7*rad4 + 3734.4*rad3 - 5124.4*rad2 + 3117.6*rad - 708.9;
    }
-   return Vax;  
+   return Vax;
 }
 
 AMREX_GPU_DEVICE
@@ -238,7 +238,7 @@ bcnormal(
   constexpr amrex::Real Pi = 3.14159265358979323846264338327950288;
   constexpr amrex::Real deg_to_radians = Pi/180.0;
   auto eos = pele::physics::PhysicsType::eos();
-  
+
   // Chamber gas composition
   amrex::Real massfrac[NUM_SPECIES] = {0.0};
   massfrac[O2_ID] = 0.233;
@@ -422,7 +422,7 @@ bcnormal(
           amrex::Real theta_in_radians=theta*deg_to_radians;
           amrex::Real y_center_odch=radius_odchs*sin(theta_in_radians);
           amrex::Real x_center_odch=-radius_odchs*cos(theta_in_radians);
-          amrex::Print()<<"\n "<<y_center_odch<<" "<<x_center_odch;
+          //amrex::Print()<<"\n "<<y_center_odch<<" "<<x_center_odch;
           amrex::Real rad=sqrt(std::pow((x[1]-y_center_odch),2.0)+pow((x[0]-x_center_odch),2.0));
           amrex::Real nz = x[2]-odch_point0_normal[2];
           amrex::Real ny = y_center_odch-odch_point0_normal[1];
@@ -433,7 +433,7 @@ bcnormal(
           nz=nz/normal;
           if(rad<=radius_outer_dome_cooling_hole)
             {
-              amrex::Print()<<"\n Yes";
+              //amrex::Print()<<"\n Yes";
 
               s_ext[VELX] = zvel_bch*nx;           //Dummy value. change it before prod run
               s_ext[VELY] = zvel_bch*ny;
