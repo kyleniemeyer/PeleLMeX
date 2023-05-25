@@ -370,7 +370,7 @@ bcnormal(
             {
               amrex::Real y_center_hole=0.5*(ymin_bch_bot+ymax_bch_bot);
               amrex::Real x_center_hole=xmin_bch_top+i*dist_between_bch;
-              amrex::Real rad=sqrt(std::pow((x[1]-y_center_hole),2.0)+pow((x[2]-x_center_hole),2.0));
+              amrex::Real rad=sqrt(std::pow((x[1]-y_center_hole),2.0)+pow((x[0]-x_center_hole),2.0));
               if(rad<=radius_baffle_cooling_holes)
                 {
                   s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
