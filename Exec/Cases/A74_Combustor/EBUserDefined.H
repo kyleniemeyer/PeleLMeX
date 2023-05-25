@@ -40,19 +40,19 @@ EBUserDefined(const Geometry& geom,
 
         amrex::Real d_bafflecoolinghole         = 2.5875*mm_to_m;
 
-        amrex::Real BCH_x     = 787.1325*mm_to_m;
+        amrex::Real BCH_z     = 787.1325*mm_to_m;
         amrex::Real BCH_y     = 0.0*mm_to_m;
-        amrex::Real BCH_z     = 0.0*mm_to_m;
+        amrex::Real BCH_x     = 0.0*mm_to_m;
 
         amrex::Real d_dome1   = 121.92*mm_to_m;
         amrex::Real d_dome2   = 111.22025*mm_to_m;
 
-        int axis_direction=0;
+        int axis_direction=2;
 
-        amrex::Real center_dump_x = 1154.5065*mm_to_m;
-        amrex::Real center_cp_x   = 784.079821*mm_to_m;
+        amrex::Real center_dump_z = 1154.5065*mm_to_m;
+        amrex::Real center_cp_z   = 784.079821*mm_to_m;
         amrex::Real center_cp_y   = 16.3322*mm_to_m;
-        amrex::Real center_cp_z   = 16.3322*mm_to_m;
+        amrex::Real center_cp_x   = 16.3322*mm_to_m;
 
         amrex::Real y_bch = 0.0662178;
         amrex::Real z_bch = 0.0662178;
@@ -64,19 +64,19 @@ EBUserDefined(const Geometry& geom,
 
         amrex::Real tol = 0.0;
 
-        Array<Real,3> transitionbox_top_point     ={0.9363575, d_dump/2.0,0.0};
-        Array<Real,3> transitionbox_bot_point     ={0.9363575,-d_dump/2.0,0.0};
-        Array<Real,3> transitionbox_frnt_point    ={0.9363575,0.0, d_dump/2.0};
-        Array<Real,3> transitionbox_back_point    ={0.9363575,0.0,-d_dump/2.0};
+        Array<Real,3> transitionbox_top_point     ={0.0, d_dump/2.0,0.9363575};
+        Array<Real,3> transitionbox_bot_point     ={0.0,-d_dump/2.0,0.9363575};
+        Array<Real,3> transitionbox_frnt_point    ={d_dump/2.0,0.0, 0.9363575};
+        Array<Real,3> transitionbox_back_point    ={-d_dump/2.0,0.0,0.9363575};
 
-        Array<Real,3> transitionbox_top_normal      ={cos(75.0*deg_to_rad), sin(75.0*deg_to_rad),0.0};
-        Array<Real,3> transitionbox_bot_normal      ={cos(75.0*deg_to_rad), -sin(75.0*deg_to_rad),0.0};
-        Array<Real,3> transitionbox_frnt_normal      ={cos(75.0*deg_to_rad), 0.0,sin(75.0*deg_to_rad)};
-        Array<Real,3> transitionbox_back_normal      ={cos(75.0*deg_to_rad), 0.0,-sin(75.0*deg_to_rad)};
+        Array<Real,3> transitionbox_top_normal      ={0.0, sin(75.0*deg_to_rad),cos(75.0*deg_to_rad)};
+        Array<Real,3> transitionbox_bot_normal      ={0.0, -sin(75.0*deg_to_rad),cos(75.0*deg_to_rad)};
+        Array<Real,3> transitionbox_frnt_normal      ={sin(75.0*deg_to_rad), 0.0,cos(75.0*deg_to_rad)};
+        Array<Real,3> transitionbox_back_normal      ={-sin(75.0*deg_to_rad), 0.0,cos(75.0*deg_to_rad)};
 
         //Dump region
-        amrex::EB2::CylinderIF Dump(0.5*d_dump,L_combustor, axis_direction, {AMREX_D_DECL(center_dump_x,0,0)}, true);
-        amrex::EB2::BoxIF Dump_Box({AMREX_D_DECL(0.78713250,-0.0672465,-0.0672465)},{AMREX_D_DECL(0.9363575, 0.0672465, 0.0672465)},true);
+        amrex::EB2::CylinderIF Dump(0.5*d_dump,L_combustor, axis_direction, {AMREX_D_DECL(0,0,center_dump_z)}, true);
+        amrex::EB2::BoxIF Dump_Box({AMREX_D_DECL(-0.0672465,-0.0672465,0.78713250)},{AMREX_D_DECL(0.0672465, 0.0672465, 0.9363575)},true);
 
         //Creating the transition section from block to cylinder
         amrex::EB2::PlaneIF transitionbox_top_plane(transitionbox_top_point,transitionbox_top_normal,true);

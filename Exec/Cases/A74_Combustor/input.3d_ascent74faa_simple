@@ -1,21 +1,21 @@
 #----------------------DOMAIN DEFINITION------------------------
 geometry.is_periodic = 0 0 0               # For each dir, 0: non-perio, 1: periodic
 geometry.coord_sys   = 0                  # 0 => cart, 1 => RZ
-geometry.prob_lo     = 0.7886565 -0.0672465 -0.0672465        # x_lo y_lo (z_lo)
-geometry.prob_hi     = 1.3266285  0.0672465  0.0672465        # x_hi y_hi (z_hi)
+geometry.prob_lo     = -0.0672465 -0.0672465 0.7886565       # x_lo y_lo (z_lo)
+geometry.prob_hi     =  0.0672465  0.0672465 1.3266285        # x_hi y_hi (z_hi)
 
 #dx (for 64 elements across sq side) = 2.101453125e-3, L = 0.537972
 # >>>>>>>>>>>>>  BC FLAGS <<<<<<<<<<<<<<<<
 # Interior, Inflow, Outflow, Symmetry,
 # SlipWallAdiab, NoSlipWallAdiab, SlipWallIsotherm, NoSlipWallIsotherm
-peleLM.lo_bc = Inflow NoSlipWallAdiab NoSlipWallAdiab
-peleLM.hi_bc = Outflow NoSlipWallAdiab NoSlipWallAdiab 
+peleLM.lo_bc = NoSlipWallAdiab NoSlipWallAdiab Inflow
+peleLM.hi_bc = NoSlipWallAdiab NoSlipWallAdiab Outflow 
 
 
 #-------------------------AMR CONTROL----------------------------
-amr.n_cell          = 256 64 64      # Level 0 number of cells in each direction   
+amr.n_cell          = 64 64 256      # Level 0 number of cells in each direction   
 amr.v               = 1                # AMR verbose
-amr.max_level       = 3                # maximum level number allowed
+amr.max_level       = 1                # maximum level number allowed
 amr.ref_ratio       = 2 2 2 2 2        # refinement ratio
 amr.regrid_int      = 5                # how often to regrid
 amr.n_error_buf     = 2 2 2 2          # number of buffer cells in error est
@@ -72,6 +72,57 @@ peleLM.chem_integrator = "ReactorNull"
 #--------------------------- Turbulence -------------------------------
 # NOTE: the centers must be consistent with the injection data provided
 # above.
+turbinflows= inj0 inj1 inj1 inj2 inj3 inj4
+
+turbinflow.inj0.turb_file      = Turb_PILOT
+turbinflow.inj0.dir            = 2
+turbinflow.inj0.side           = low
+turbinflow.inj0.turb_scale_loc = 1.0
+turbinflow.inj0.turb_scale_vel = 1.0
+turbinflow.inj0.turb_center    = 0.0 0.0
+turbinflow.inj0.turb_conv_vel  = 0.0
+turbinflow.inj0.turb_nplane    = 8
+turbinflow.inj0.time_offset    = 0.0
+
+turbinflow.inj1.turb_file      = Turb_CP00
+turbinflow.inj1.dir            = 2
+turbinflow.inj1.side           = low
+turbinflow.inj1.turb_scale_loc = 1.0
+turbinflow.inj1.turb_scale_vel = 1.0
+turbinflow.inj1.turb_center    = -0.0163322 0.0163322
+turbinflow.inj1.turb_conv_vel  = 0.0
+turbinflow.inj1.turb_nplane    = 8
+turbinflow.inj1.time_offset    = 0.0
+
+turbinflow.inj2.turb_file      = Turb_CP01
+turbinflow.inj2.dir            = 2
+turbinflow.inj2.side           = low
+turbinflow.inj2.turb_scale_loc = 1.0
+turbinflow.inj2.turb_scale_vel = 1.0
+turbinflow.inj2.turb_center    = 0.0163322 0.0163322
+turbinflow.inj2.turb_conv_vel  = 0.0
+turbinflow.inj2.turb_nplane    = 8
+turbinflow.inj2.time_offset    = 0.0
+
+turbinflow.inj3.turb_file      = Turb_CP02
+turbinflow.inj3.dir            = 2
+turbinflow.inj3.side           = low
+turbinflow.inj3.turb_scale_loc = 1.0
+turbinflow.inj3.turb_scale_vel = 1.0
+turbinflow.inj3.turb_center    = -0.0163322 -0.0163322
+turbinflow.inj3.turb_conv_vel  = 0.0
+turbinflow.inj3.turb_nplane    = 8
+turbinflow.inj3.time_offset    = 0.0
+
+turbinflow.inj4.turb_file      = Turb_CP03
+turbinflow.inj4.dir            = 2
+turbinflow.inj4.side           = low
+turbinflow.inj4.turb_scale_loc = 1.0
+turbinflow.inj4.turb_scale_vel = 1.0
+turbinflow.inj4.turb_center    = 0.0163322 -0.0163322
+turbinflow.inj4.turb_conv_vel  = 0.0
+turbinflow.inj4.turb_nplane    = 8
+turbinflow.inj4.time_offset    = 0.0
 
 #------------------------- EB SETUP -----------------------------
 eb2.geom_type = UserDefined
@@ -84,7 +135,7 @@ peleLM.refine_EB_max_level = 1
 peleLM.refine_EB_buffer = 2.0
 
 #--------------------REFINEMENT CONTROL------------------------
-amr.refinement_indicators = magVort tagJets
+amr.refinement_indicators = magVort tagJets 
 amr.magVort.max_level     = 2
 amr.magVort.value_greater = 5000.0 
 amr.magVort.field_name    = mag_vort

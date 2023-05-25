@@ -17,11 +17,11 @@ USE_EB          = TRUE
 USE_HYPRE       = FALSE
 
 # Compilation
-COMP            = clang
+COMP            = gnu
 USE_MPI         = TRUE
 USE_OMP         = FALSE
 USE_CUDA        = FALSE
-USE_HIP         = TRUE
+USE_HIP         = FALSE
 
 # PeleLMeX
 CEXE_header    += EBUserDefined.H

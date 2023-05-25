@@ -38,13 +38,13 @@ void pelelm_deruserdef (PeleLM* /*a_pelelm*/, const Box& bx, FArrayBox& derfab, 
                      amrex::Real y = prob_lo[1] + (j+0.5)*dy;,
                      amrex::Real z = prob_lo[2] + (k+0.5)*dz;);
         amrex::Real yc = prob_lo[1] + 0.5 * (prob_hi[1] - prob_lo[1]);
-        amrex::Real zc = prob_lo[2] + 0.5 * (prob_hi[2] - prob_lo[2]);
-        amrex::Real rad = std::sqrt((y-yc)*(y-yc)+(z-zc)*(z-zc));
-        if (rad > 0.0625 && rad < 0.0655 && x < (prob_lo[0]+0.002) ) {
+        amrex::Real xc = prob_lo[0] + 0.5 * (prob_hi[0] - prob_lo[0]);
+        amrex::Real rad = std::sqrt((y-yc)*(y-yc)+(x-xc)*(x-xc));
+        if (rad > 0.0625 && rad < 0.0655 && x < (prob_lo[2]+0.002) ) {
           uder_arr(i,j,k,0) = 1.0;
-        } else if (rad > 0.057 && rad < 0.060 && x < (prob_lo[0]+0.002) ) {
+        } else if (rad > 0.057 && rad < 0.060 && x < (prob_lo[2]+0.002) ) {
           uder_arr(i,j,k,0) = 1.0;
-        } else if ( (std::abs(y-yc) > 0.065 || std::abs(z-zc) > 0.065) && x < (prob_lo[0]+0.002) ) {
+        } else if ( (std::abs(y-yc) > 0.065 || std::abs(x-xc) > 0.065) && x < (prob_lo[2]+0.002) ) {
           uder_arr(i,j,k,0) = 1.0;
         } else {
           uder_arr(i,j,k,0) = 0.0;

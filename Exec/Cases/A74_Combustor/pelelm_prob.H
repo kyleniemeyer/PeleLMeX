@@ -211,6 +211,17 @@ Get_Rad_Velocity(amrex::Real rad)
 
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
+amrex::Real
+CalculateRadiusOnPlane(amrex::Real xval,
+                       amrex::Real yval,
+                       amrex::Real x_center,
+                       amrex::Real y_center)
+{
+   return sqrt((xval-x_center)*(xval-x_center)+((yval-y_center)*(yval-y_center)));
+}
+
+AMREX_GPU_DEVICE
+AMREX_FORCE_INLINE
 void
 bcnormal(
   const amrex::Real x[AMREX_SPACEDIM],
@@ -253,31 +264,31 @@ bcnormal(
   amrex::Real x_c = x[0];
   amrex::Real y_c = x[1];
   amrex::Real z_c = x[2];
-  amrex::Real radius=sqrt(std::pow((x[1]),2.0)+pow((x[2]),2.0));
+  amrex::Real radius=sqrt(std::pow((x[0]),2.0)+pow((x[1]),2.0));
 
   bool use_strip_method_for_bafflecoolingholes=false;
 
   //Top baffle cooling holes
   amrex::Real ymax_bch_top = (66.2178+0.79375)*0.001;   //bch->baffle cooling holes
   amrex::Real ymin_bch_top = (66.2178-0.79375)*0.001;   //bch->baffle cooling holes
-  amrex::Real zmin_bch_top = -62.865*0.001;
-  amrex::Real zmax_bch_top =  62.865*0.001;
+  amrex::Real xmin_bch_top = -62.865*0.001;
+  amrex::Real xmax_bch_top =  62.865*0.001;
 
   //Bottom baffle cooling holes
   amrex::Real ymax_bch_bot = (-66.2178-0.79375)*0.001;   //bch->baffle cooling holes
   amrex::Real ymin_bch_bot = (-66.2178+0.79375)*0.001;   //bch->baffle cooling holes
-  amrex::Real zmin_bch_bot = -62.865*0.001;
-  amrex::Real zmax_bch_bot =  62.865*0.001;
+  amrex::Real xmin_bch_bot = -62.865*0.001;
+  amrex::Real xmax_bch_bot =  62.865*0.001;
 
   //front baffle cooling holes
-  amrex::Real zmax_bch_frt = (66.2178+0.79375)*0.001;   //bch->baffle cooling holes
-  amrex::Real zmin_bch_frt = (66.2178-0.79375)*0.001;   //bch->baffle cooling holes
+  amrex::Real xmax_bch_frt = (66.2178+0.79375)*0.001;   //bch->baffle cooling holes
+  amrex::Real xmin_bch_frt = (66.2178-0.79375)*0.001;   //bch->baffle cooling holes
   amrex::Real ymin_bch_frt = -66.865*0.001;
   amrex::Real ymax_bch_frt =  66.865*0.001;
 
   //back baffle cooling holes
-  amrex::Real zmax_bch_bak = (-66.2178-0.79375)*0.001;   //bch->baffle cooling holes
-  amrex::Real zmin_bch_bak = (-66.2178+0.79375)*0.001;   //bch->baffle cooling holes
+  amrex::Real xmax_bch_bak = (-66.2178-0.79375)*0.001;   //bch->baffle cooling holes
+  amrex::Real xmin_bch_bak = (-66.2178+0.79375)*0.001;   //bch->baffle cooling holes
   amrex::Real ymin_bch_bak = -66.865*0.001;
   amrex::Real ymax_bch_bak =  66.865*0.001;
 
@@ -285,7 +296,7 @@ bcnormal(
   amrex::Real radius_baffle_cooling_holes=0.79375*0.001;
   amrex::Real dist_between_bch=3.81*0.001;
 
-  amrex::Real xvel_bch=10.0;
+  amrex::Real zvel_bch=10.0;
 
   //Outer dome cooling holes
   amrex::Real radius_outer_dome_cooling_hole=0.4445*0.001;
@@ -294,7 +305,7 @@ bcnormal(
   amrex::Real rmin_outer_dch=radius_odchs-radius_outer_dome_cooling_hole;
   int num_of_outer_dch=52;
   amrex::Real delta_theta=360.0/52.0;
-  amrex::Array<amrex::Real,3> odch_point0_normal     ={0.7244707034,0.0,0.0};
+  amrex::Array<amrex::Real,3> odch_point0_normal     ={0.0,0.0,0.7244707034};
 
 
   //Inner dome cooling holes
@@ -303,101 +314,103 @@ bcnormal(
   amrex::Real rmax_inner_dch=radius_idchs+radius_inner_dome_cooling_hole;
   amrex::Real rmin_inner_dch=radius_idchs-radius_inner_dome_cooling_hole;
   int num_of_inner_dch=52;
-  amrex::Array<amrex::Real,3> idch_point0_normal     ={0.7095693667,0.0,0.0};
+  amrex::Array<amrex::Real,3> idch_point0_normal     ={0.0,0.0,0.7095693667};
 
 
   //Use a strip for modeling baffle cooling holes
   if(use_strip_method_for_bafflecoolingholes)
     {
       //top
-      if(y_c>=ymin_bch_top and y_c<=ymax_bch_top and z_c>=zmin_bch_top and z_c<=zmax_bch_top)
+      if(y_c>=ymin_bch_top and y_c<=ymax_bch_top and x_c>=xmin_bch_top and x_c<=xmax_bch_top)
         {
-          s_ext[VELX] = xvel_bch;           //Dummy value. change it before prod run
+          s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
           s_ext[VELY] = 0.0;
-          s_ext[VELZ] = 0.0;
+          s_ext[VELZ] = zvel_bch;
 
         } //bottom
-      else if(y_c>=ymax_bch_bot and y_c<=ymin_bch_bot and z_c>=zmin_bch_bot and z_c<=zmax_bch_bot)
+      else if(y_c>=ymax_bch_bot and y_c<=ymin_bch_bot and x_c>=xmin_bch_bot and x_c<=xmax_bch_bot)
         {
-          s_ext[VELX] = xvel_bch;           //Dummy value. change it before prod run
-          s_ext[VELY] = 0.0;
-          s_ext[VELZ] = 0.0;
+          s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
+                    s_ext[VELY] = 0.0;
+                    s_ext[VELZ] = zvel_bch;
         } //front
-      else if(y_c>=ymin_bch_frt and y_c<=ymax_bch_frt and z_c>=zmin_bch_frt and z_c<=zmax_bch_frt)
+      else if(y_c>=ymin_bch_frt and y_c<=ymax_bch_frt and x_c>=xmin_bch_frt and x_c<=xmax_bch_frt)
         {
-          s_ext[VELX] = xvel_bch;           //Dummy value. change it before prod run
-          s_ext[VELY] = 0.0;
-          s_ext[VELZ] = 0.0;
+          s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
+                    s_ext[VELY] = 0.0;
+                    s_ext[VELZ] = zvel_bch;
         }
-      else if (y_c<=ymax_bch_bak and y_c>=ymin_bch_bak and z_c>=zmax_bch_bak and z_c<=zmin_bch_bak)
+      else if (y_c<=ymax_bch_bak and y_c>=ymin_bch_bak and x_c>=xmax_bch_bak and x_c<=xmin_bch_bak)
         {
-          s_ext[VELX] = xvel_bch;           //Dummy value. change it before prod run
-          s_ext[VELY] = 0.0;
-          s_ext[VELZ] = 0.0;
+          s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
+                    s_ext[VELY] = 0.0;
+                    s_ext[VELZ] = zvel_bch;
         }
     }
   else  //Use circular patches as inlets for baffle cooling holes
     {
-      if(y_c>=ymin_bch_top and y_c<=ymax_bch_top and z_c>=zmin_bch_top-radius_baffle_cooling_holes and z_c<=zmax_bch_top+radius_baffle_cooling_holes)
+      if(y_c>=ymin_bch_top and y_c<=ymax_bch_top and x_c>=xmin_bch_top-radius_baffle_cooling_holes and x_c<=xmax_bch_top+radius_baffle_cooling_holes)
         {
           for(int i=0;i<num_of_baffle_cooling_holes;i++)
             {
               amrex::Real y_center_hole=0.5*(ymin_bch_top+ymax_bch_top);
-              amrex::Real z_center_hole=zmin_bch_top+i*dist_between_bch;
-              amrex::Real rad=sqrt(std::pow((x[1]-y_center_hole),2.0)+pow((x[2]-z_center_hole),2.0));
+              amrex::Real x_center_hole=xmin_bch_top+i*dist_between_bch;
+              amrex::Real rad=sqrt(std::pow((x[1]-y_center_hole),2.0)+pow((x[0]-x_center_hole),2.0));
               if(rad<=radius_baffle_cooling_holes)
                 {
-                  s_ext[VELX] = xvel_bch;           //Dummy value. change it before prod run
-                  s_ext[VELY] = 0.0;
-                  s_ext[VELZ] = 0.0;
+                  s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
+                                      s_ext[VELY] = 0.0;
+                                      s_ext[VELZ] = zvel_bch;
                 }
             }
         }
-      else if(y_c>=ymax_bch_bot and y_c<=ymin_bch_bot and z_c>=zmin_bch_bot and z_c<=zmax_bch_bot)
+      else if(y_c>=ymax_bch_bot and y_c<=ymin_bch_bot and x_c>=xmin_bch_bot and x_c<=xmax_bch_bot)
         {
           for(int i=0;i<num_of_baffle_cooling_holes;i++)
             {
               amrex::Real y_center_hole=0.5*(ymin_bch_bot+ymax_bch_bot);
-              amrex::Real z_center_hole=zmin_bch_top+i*dist_between_bch;
-              amrex::Real rad=sqrt(std::pow((x[1]-y_center_hole),2.0)+pow((x[2]-z_center_hole),2.0));
+              amrex::Real x_center_hole=xmin_bch_top+i*dist_between_bch;
+              amrex::Real rad=sqrt(std::pow((x[1]-y_center_hole),2.0)+pow((x[2]-x_center_hole),2.0));
               if(rad<=radius_baffle_cooling_holes)
                 {
-                  s_ext[VELX] = xvel_bch;           //Dummy value. change it before prod run
-                  s_ext[VELY] = 0.0;
-                  s_ext[VELZ] = 0.0;
+                  s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
+                            s_ext[VELY] = 0.0;
+                            s_ext[VELZ] = zvel_bch;
                 }
             }
         } //front
-      else if(y_c>=ymin_bch_frt and y_c<=ymax_bch_frt and z_c>=zmin_bch_frt and z_c<=zmax_bch_frt)
+      else if(y_c>=ymin_bch_frt and y_c<=ymax_bch_frt and x_c>=xmin_bch_frt and x_c<=xmax_bch_frt)
         {
           for(int i=0;i<num_of_baffle_cooling_holes;i++)
             {
               amrex::Real y_center_hole=ymin_bch_frt+i*dist_between_bch;
-              amrex::Real z_center_hole=0.5*(zmin_bch_frt+zmax_bch_frt);
-              amrex::Real rad=sqrt(std::pow((x[1]-y_center_hole),2.0)+pow((x[2]-z_center_hole),2.0));
+              amrex::Real x_center_hole=0.5*(xmin_bch_frt+xmax_bch_frt);
+              amrex::Real rad=sqrt(std::pow((x[1]-y_center_hole),2.0)+pow((x[0]-x_center_hole),2.0));
               if(rad<=radius_baffle_cooling_holes)
                 {
-                  s_ext[VELX] = xvel_bch;           //Dummy value. change it before prod run
+                  s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
                   s_ext[VELY] = 0.0;
-                  s_ext[VELZ] = 0.0;
+                  s_ext[VELZ] = zvel_bch;
                 }
             }
         }
-      else if (y_c<=ymax_bch_bak and y_c>=ymin_bch_bak and z_c>=zmax_bch_bak and z_c<=zmin_bch_bak)
+      else if (y_c<=ymax_bch_bak and y_c>=ymin_bch_bak and x_c>=xmax_bch_bak and x_c<=xmin_bch_bak)
         {
           for(int i=0;i<num_of_baffle_cooling_holes;i++)
             {
               amrex::Real y_center_hole=ymin_bch_bak+i*dist_between_bch;
-              amrex::Real z_center_hole=0.5*(zmin_bch_bak+zmax_bch_bak);
-              amrex::Real rad=sqrt(std::pow((x[1]-y_center_hole),2.0)+pow((x[2]-z_center_hole),2.0));
+              amrex::Real x_center_hole=0.5*(xmin_bch_bak+xmax_bch_bak);
+              amrex::Real rad=sqrt(std::pow((x[1]-y_center_hole),2.0)+pow((x[0]-x_center_hole),2.0));
               if(rad<=radius_baffle_cooling_holes)
                 {
-                  s_ext[VELX] = xvel_bch;           //Dummy value. change it before prod run
+                  s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
                   s_ext[VELY] = 0.0;
-                  s_ext[VELZ] = 0.0;
+                  s_ext[VELZ] = zvel_bch;
                 }
             }
         }
+
+
 
     }
 
@@ -408,21 +421,23 @@ bcnormal(
         {
           amrex::Real theta_in_radians=theta*deg_to_radians;
           amrex::Real y_center_odch=radius_odchs*sin(theta_in_radians);
-          amrex::Real z_center_odch=radius_odchs*cos(theta_in_radians);
-          amrex::Real rad=sqrt(std::pow((x[1]-y_center_odch),2.0)+pow((x[2]-z_center_odch),2.0));
-          amrex::Real nx = x[0]-odch_point0_normal[0];
+          amrex::Real x_center_odch=-radius_odchs*cos(theta_in_radians);
+          amrex::Print()<<"\n "<<y_center_odch<<" "<<x_center_odch;
+          amrex::Real rad=sqrt(std::pow((x[1]-y_center_odch),2.0)+pow((x[0]-x_center_odch),2.0));
+          amrex::Real nz = x[2]-odch_point0_normal[2];
           amrex::Real ny = y_center_odch-odch_point0_normal[1];
-          amrex::Real nz = z_center_odch-odch_point0_normal[2];
+          amrex::Real nx = x_center_odch-odch_point0_normal[0];
           amrex::Real normal = sqrt(nx*nx+ny*ny+nz*nz);
           nx=nx/normal;
           ny=ny/normal;
           nz=nz/normal;
           if(rad<=radius_outer_dome_cooling_hole)
             {
+              amrex::Print()<<"\n Yes";
 
-              s_ext[VELX] = xvel_bch*nx;           //Dummy value. change it before prod run
-              s_ext[VELY] = xvel_bch*ny;
-              s_ext[VELZ] = xvel_bch*nz;
+              s_ext[VELX] = zvel_bch*nx;           //Dummy value. change it before prod run
+              s_ext[VELY] = zvel_bch*ny;
+              s_ext[VELZ] = zvel_bch*nz;
             }
         }
     }
@@ -434,23 +449,25 @@ bcnormal(
           {
             amrex::Real theta_in_radians=theta*deg_to_radians;
             amrex::Real y_center_idch=radius_idchs*sin(theta_in_radians);
-            amrex::Real z_center_idch=radius_idchs*cos(theta_in_radians);
-            amrex::Real rad=sqrt(std::pow((x[1]-y_center_idch),2.0)+pow((x[2]-z_center_idch),2.0));
-            amrex::Real nx = x[0]-idch_point0_normal[0];
+            amrex::Real x_center_idch=-radius_idchs*cos(theta_in_radians);
+            amrex::Real rad=sqrt(std::pow((x[1]-y_center_idch),2.0)+pow((x[2]-x_center_idch),2.0));
+            amrex::Real nz = x[2]-idch_point0_normal[2];
             amrex::Real ny = y_center_idch-idch_point0_normal[1];
-            amrex::Real nz = z_center_idch-idch_point0_normal[2];
+            amrex::Real nx = x_center_idch-idch_point0_normal[0];
             amrex::Real normal = sqrt(nx*nx+ny*ny+nz*nz);
             nx=nx/normal;
             ny=ny/normal;
             nz=nz/normal;
             if(rad<=radius_inner_dome_cooling_hole)
               {
-                s_ext[VELX] = xvel_bch*nx;           //Dummy value. change it before prod run
-                s_ext[VELY] = xvel_bch*ny;
-                s_ext[VELZ] = xvel_bch*nz;
+                s_ext[VELX] = zvel_bch*nx;           //Dummy value. change it before prod run
+                s_ext[VELY] = zvel_bch*ny;
+                s_ext[VELZ] = zvel_bch*nz;
               }
           }
       }
+
+
 
 }
 
