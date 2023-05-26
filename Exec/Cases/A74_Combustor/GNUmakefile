@@ -28,10 +28,10 @@ CEXE_header    += EBUserDefined.H
 CEXE_sources   += DeriveUserDefined.cpp
 
 # PeleMP
-#USE_PARTICLES   = TRUE
-#SPRAY_FUEL_NUM  = 1
-#CEXE_sources   += SprayParticlesInitInsert.cpp
-#PELELM_USE_SPRAY = TRUE
+USE_PARTICLES   = TRUE
+SPRAY_FUEL_NUM  = 1
+CEXE_sources   += SprayParticlesInitInsert.cpp
+PELELM_USE_SPRAY = TRUE
 
 # PelePhysics
 Chemistry_Model = dodmethair_4sp
