@@ -24,16 +24,8 @@ amr.blocking_factor = 16               # block factor in grid generation (min bo
 amr.max_grid_size   = 64               # max box size
 
 #--------------------------- Problem -------------------------------
-prob.P_mean = 2000000.0
-prob.T_mean = 600.0
-
-prob.d_venturi      = 0.02033
-prob.d_swirlerexit  = 0.02032
-prob.d_dump         = 0.076
-
-prob.l_venturi      = 0.0008382
-prob.l_swirlercup   = 0.0043688
-prob.l_dump         = 0.20
+prob.P_mean = 772213.0		       #112 psi as per provided info
+prob.T_mean = 683.15		       #770 F as per provided info
 
 #-------------------------PeleLM CONTROL----------------------------
 peleLM.v = 3
@@ -140,7 +132,7 @@ amr.magVort.max_level     = 2
 amr.magVort.value_greater = 5000.0 
 amr.magVort.field_name    = mag_vort
 
-amr.tagJets.max_level     = 2
+amr.tagJets.max_level     = 3
 amr.tagJets.value_greater = 0.5
 amr.tagJets.field_name    = tagCoolingJets
 

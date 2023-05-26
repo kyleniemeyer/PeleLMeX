@@ -9,13 +9,6 @@ using namespace amrex::literals;
 struct ProbParm
 {
    //Geometric conditions
-   amrex::Real d_venturi 		= 0.013;
-   amrex::Real d_swirlerexit 	= 0.02032;
-   amrex::Real d_dump 			= 0.076;
-
-   amrex::Real l_venturi = 0.0008382;
-   amrex::Real l_swirlercup = 0.0043688;
-   amrex::Real l_dump = 0.20;
 
    bool activate_fuel_injection = false;
    amrex::Real fuel_injection_max_radius=0.5;

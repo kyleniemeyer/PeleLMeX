@@ -101,14 +101,6 @@ void PeleLM::readProbParm()
 {
    amrex::ParmParse pp("prob");
 
-   //Geometric parameters
-   pp.query("d_venturi", PeleLM::prob_parm->d_venturi);
-   pp.query("d_swirlerexit", PeleLM::prob_parm->d_swirlerexit);
-   pp.query("d_dump", PeleLM::prob_parm->d_dump);
-
-   pp.query("l_venturi", PeleLM::prob_parm->l_venturi);
-   pp.query("l_swirlercup", PeleLM::prob_parm->l_swirlercup);
-   pp.query("l_dump", PeleLM::prob_parm->l_dump);
 
    // Chamber conditions
    pp.query("P_mean", PeleLM::prob_parm->P_mean);
