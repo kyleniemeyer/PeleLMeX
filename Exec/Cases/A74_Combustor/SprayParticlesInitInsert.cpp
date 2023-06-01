@@ -105,7 +105,7 @@ SprayParticleContainer::injectParticles(Real time,
   // Using Rizk & Levebre 1985
   Real theta = js->spread_angle() * M_PI / 180.0;
   Real ratio = ( 1.0 - std::cos(theta)*std::cos(theta) ) / ( 1.0 + std::cos(theta)*std::cos(theta) );
-  Real r0 = prob_parm.ps_r0;
+  Real r0 = js->jet_dia()*0.5;
   Real ra = std::sqrt(ratio*r0*r0);
   Real r_mean = 0.5 * ( r0 + ra );
 
