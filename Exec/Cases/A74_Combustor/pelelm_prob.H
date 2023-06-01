@@ -55,6 +55,22 @@ locate(const amrex::Real* xtable, const int n, const amrex::Real& x, int& idxlo)
 
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
+void
+set_Y_from_Phi(const amrex::Real phi_in,
+               amrex::Real Y[])
+{
+   auto eos = pele::physics::PhysicsType::eos();
+   amrex::Real Xt[NUM_SPECIES] = {0.0};
+   amrex::Real a = 18.5;  // For NC12H26
+   Xt[O2_ID] = 1.0 / ( 1.0 + phi_in / a + 0.79 / 0.21 );
+   Xt[NC12H26_ID] = phi_in * Xt[O2_ID] / a;
+   Xt[N2_ID] = 1.0 - Xt[O2_ID] - Xt[NC12H26_ID];
+
+   eos.X2Y(Xt,Y);
+}
+
+AMREX_GPU_DEVICE
+AMREX_FORCE_INLINE
 void pelelm_initdata(int i, int j, int k,
                      int is_incompressible,
                      amrex::Array4<amrex::Real> const& state,
@@ -239,12 +255,31 @@ bcnormal(
   constexpr amrex::Real deg_to_radians = Pi/180.0;
   auto eos = pele::physics::PhysicsType::eos();
 
-  // Chamber gas composition
+  // Radial coordinate of the point on boundary. The inlets lie on lowZ X-Y plane
+  amrex::Real x_c = x[0];
+  amrex::Real y_c = x[1];
+  amrex::Real z_c = x[2];
+  amrex::Real radius = sqrt(x[0]*x[0]+x[1]*x[1]);
+
+  // Default chamber gas composition
   amrex::Real massfrac[NUM_SPECIES] = {0.0};
   massfrac[O2_ID] = 0.233;
   massfrac[N2_ID] = 0.767;
 
-  //Thermo/fluid variables
+  // Set up premixer composition
+  amrex::GpuArray<amrex::Real,2*4> prem_centers{-0.0163322, 0.0163322,
+                                                 0.0163322, 0.0163322,
+                                                -0.0163322,-0.0163322,
+                                                 0.0163322,-0.0163322};
+  for (int pm = 0; pm < 4; ++pm) {
+    amrex::Real pm_rad = sqrt(  (x[0]-prem_centers[2*pm])  *(x[0]-prem_centers[2*pm])
+                              + (x[1]-prem_centers[2*pm+1])*(x[1]-prem_centers[2*pm+1]));
+    if (pm_rad < 0.0083312 && pm_rad >= 0.0057404) {
+       set_Y_from_Phi(prob_parm.premix_phi,massfrac);
+    }
+  }
+
+  // Thermo/fluid variables
   amrex::Real p_cgs = prob_parm.P_mean * 10.0;		//From user input and converting it into cgs unit
   amrex::Real rho_cgs = 0.0;
   amrex::Real RhoH_temp = 0.0;
@@ -260,11 +295,6 @@ bcnormal(
      s_ext[FIRSTSPEC+n] = massfrac[n] * s_ext[DENSITY];
   }
 
-  //Radial coordinate of the point on boundary. The inlets lie on Y-Z plane
-  amrex::Real x_c = x[0];
-  amrex::Real y_c = x[1];
-  amrex::Real z_c = x[2];
-  amrex::Real radius=sqrt(std::pow((x[0]),2.0)+pow((x[1]),2.0));
 
   bool use_strip_method_for_bafflecoolingholes=false;
 
@@ -306,7 +336,6 @@ bcnormal(
   int num_of_outer_dch=52;
   amrex::Real delta_theta=360.0/52.0;
   amrex::Array<amrex::Real,3> odch_point0_normal     ={0.0,0.0,0.7244707034};
-
 
   //Inner dome cooling holes
   amrex::Real radius_inner_dome_cooling_hole=0.8255*0.001;
@@ -495,8 +524,45 @@ zero_visc (int i, int j, int k,
            const int  beta_comp,
            const int  nComp)
 {
-     amrex::ignore_unused(i,j,k,beta,geomdata,domainBox,dir,beta_comp,nComp);
+    amrex::ignore_unused(i,j,k,beta,geomdata,domainBox,dir,beta_comp,nComp);
     // We treat species when beta_comp == 0 and nComp == NUM_SPECIES
     // otherwise this routine could be called for other face diffusivity (Temp, velocity, ...)
+
+    // Zero only on the lowZ for species and temperature.
+    if ( (beta_comp == 0) && (nComp == NUM_SPECIES) ||
+         (beta_comp == NUM_SPECIES) && (nComp == 1) ) {
+      if (dir == 2 && k <= domainBox.smallEnd(dir)) {
+        const amrex::Real* prob_lo = geomdata.ProbLo();
+        const amrex::Real* dx      = geomdata.CellSize();
+        const amrex::Real x = prob_lo[0] + (i+0.5)*dx[0];
+        const amrex::Real y = prob_lo[1] + (j+0.5)*dx[1];
+
+        amrex::Real diff_factor_compl = 0.0;
+
+        // Set to one in premixers:
+        amrex::GpuArray<amrex::Real,2*4> prem_centers{-0.0163322, 0.0163322,
+                                                       0.0163322, 0.0163322,
+                                                      -0.0163322,-0.0163322,
+                                                       0.0163322,-0.0163322};
+        for (int pm = 0; pm < 4; ++pm) {
+          amrex::Real pm_rad = sqrt(  (x-prem_centers[2*pm])  *(x-prem_centers[2*pm])
+                                    + (y-prem_centers[2*pm+1])*(y-prem_centers[2*pm+1]));
+          if (pm_rad < 0.0083312 && pm_rad >= 0.0057404) {
+            diff_factor_compl = 1.0;
+          }
+        }
+
+        // Set to one in the pilot
+        amrex::Real pilot_rad = sqrt(x*x+y*y);
+        if (pilot_rad <= 0.00508) {
+          diff_factor_compl = 1.0;
+        }
+
+        amrex::Real diff_factor = 1.0 - diff_factor_compl;
+        for (int n = beta_comp; n < beta_comp + nComp; n++) {
+           beta(i,j,k,n) *= diff_factor;
+        }
+      }
+    }
 }
 #endif
