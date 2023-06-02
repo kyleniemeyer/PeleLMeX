@@ -106,6 +106,22 @@ void pelelm_initdata(int i, int j, int k,
     massfrac[N2_ID] = 0.767;
     state(i,j,k,TEMP) = prob_parm.T_mean;
 
+    if (prob_parm.do_ignit) {
+        // Add hot air in front of the premixers:
+        amrex::GpuArray<amrex::Real,2*4> prem_centers{-0.0163322, 0.0163322,
+                                                       0.0163322, 0.0163322,
+                                                      -0.0163322,-0.0163322,
+                                                       0.0163322,-0.0163322};
+        for (int pm = 0; pm < 4; ++pm) {
+          amrex::Real z_center = prob_lo[2] + prob_parm.ignit_lowZ;
+          amrex::Real pm_rad = sqrt(  (x[0]-prem_centers[2*pm])  *(x[0]-prem_centers[2*pm])
+                                    + (x[1]-prem_centers[2*pm+1])*(x[1]-prem_centers[2*pm+1])
+                                    + (x[2]-z_center)*(x[2]-z_center));
+          amrex::Real tanh_dist = 0.5 * (1.0 - std::tanh((std::abs(pm_rad)-prob_parm.ignit_rad)/0.001));
+          state(i,j,k,TEMP) += tanh_dist * (1300.0-prob_parm.T_mean);
+        }
+    }
+
     state(i,j,k,VELX) = 0.0;
     state(i,j,k,VELY) = 0.0;
     state(i,j,k,VELZ) = 0.0;
@@ -124,7 +140,7 @@ void pelelm_initdata(int i, int j, int k,
 
     for (int n = 0; n < NUM_SPECIES; n++) {
            state(i,j,k,FIRSTSPEC+n) = massfrac[n] * state(i,j,k,DENSITY);
-        }
+    }
 
 }
 

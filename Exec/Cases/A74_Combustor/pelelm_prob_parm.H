@@ -20,6 +20,11 @@ struct ProbParm
 
    // Premixers
    amrex::Real premix_phi = 1.136;
+
+   // Ignition
+   int do_ignit = 0;
+   amrex::Real ignit_rad = 0.008;
+   amrex::Real ignit_lowZ = 0.02;
    
 };
 #endif

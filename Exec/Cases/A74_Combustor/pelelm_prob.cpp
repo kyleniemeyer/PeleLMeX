@@ -113,4 +113,9 @@ void PeleLM::readProbParm()
 
    // Premixer
    pp.query("premixer_phi", PeleLM::prob_parm->premix_phi);
+
+   // Ignit
+   pp.query("ignite", PeleLM::prob_parm->do_ignit);
+   pp.query("ignite_radius", PeleLM::prob_parm->ignit_rad);
+   pp.query("ignite_lowZ", PeleLM::prob_parm->ignit_lowZ);
 }
