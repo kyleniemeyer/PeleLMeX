@@ -544,18 +544,18 @@ zero_visc (int i, int j, int k,
     // We treat species when beta_comp == 0 and nComp == NUM_SPECIES
     // otherwise this routine could be called for other face diffusivity (Temp, velocity, ...)
 
-    // Zero only on the lowZ for species and temperature.
-    if ( (beta_comp == 0) && (nComp == NUM_SPECIES) ||
-         (beta_comp == NUM_SPECIES) && (nComp == 1) ) {
+    // Zero only on the lowZ for species.
+    if ( (beta_comp == 0) && (nComp == NUM_SPECIES) ) {
       if (dir == 2 && k <= domainBox.smallEnd(dir)) {
         const amrex::Real* prob_lo = geomdata.ProbLo();
         const amrex::Real* dx      = geomdata.CellSize();
         const amrex::Real x = prob_lo[0] + (i+0.5)*dx[0];
         const amrex::Real y = prob_lo[1] + (j+0.5)*dx[1];
 
-        amrex::Real diff_factor_compl = 0.0;
+        // Walls everywhere be default
+        int wall_tag = 1;
 
-        // Set to one in premixers:
+        // Not on the premixers:
         amrex::GpuArray<amrex::Real,2*4> prem_centers{-0.0163322, 0.0163322,
                                                        0.0163322, 0.0163322,
                                                       -0.0163322,-0.0163322,
@@ -564,19 +564,20 @@ zero_visc (int i, int j, int k,
           amrex::Real pm_rad = sqrt(  (x-prem_centers[2*pm])  *(x-prem_centers[2*pm])
                                     + (y-prem_centers[2*pm+1])*(y-prem_centers[2*pm+1]));
           if (pm_rad < 0.0083312 && pm_rad >= 0.0057404) {
-            diff_factor_compl = 1.0;
+            wall_tag = 0;
           }
         }
 
-        // Set to one in the pilot
+        // Not on the pilot
         amrex::Real pilot_rad = sqrt(x*x+y*y);
         if (pilot_rad <= 0.00508) {
-          diff_factor_compl = 1.0;
+          wall_tag = 0;
         }
 
-        amrex::Real diff_factor = 1.0 - diff_factor_compl;
-        for (int n = beta_comp; n < beta_comp + nComp; n++) {
-           beta(i,j,k,n) *= diff_factor;
+        if (wall_tag == 1) {
+          for (int n = beta_comp; n < beta_comp + nComp; n++) {
+             beta(i,j,k,n) = 0.0;
+          }
         }
       }
     }
