@@ -114,7 +114,7 @@ SprayParticleContainer::injectParticles(Real time,
   Real theta_max = std::abs(std::atan(std::tan(theta) * 2.0 * r0 / r_mean));
 
   // Get axial speed from mass conservation
-  Real mass_flow_rate = js->mass_flow_rate();
+  Real mass_flow_rate = js->mass_flow_rate(time);
   Real jet_vel = mass_flow_rate / ( rhoL_avg * M_PI * r0 * r0 * (1.0 - ratio));
 
   // Host container
@@ -262,8 +262,6 @@ SprayParticleContainer::InitSprayParticles(const bool init_parts,
   std::string jet_name = "jet1";
   m_sprayJets[0] = std::make_unique<PressureSwirlJet>(jet_name, Geom(0));
   m_sprayJets[0]->set_inj_proc(0);
-  // This ensures the initial time step size stays reasonable
-  m_injectVel = m_sprayJets[0]->jet_vel();
   // Start without any particles
   return;
 }
