@@ -25,6 +25,7 @@ struct ProbParm
    int do_ignit = 0;
    amrex::Real ignit_rad = 0.008;
    amrex::Real ignit_lowZ = 0.02;
+   amrex::Real ignit_temp = 1400.0;
    
 };
 #endif

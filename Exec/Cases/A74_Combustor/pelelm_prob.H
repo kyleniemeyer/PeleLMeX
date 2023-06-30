@@ -118,7 +118,7 @@ void pelelm_initdata(int i, int j, int k,
                                     + (x[1]-prem_centers[2*pm+1])*(x[1]-prem_centers[2*pm+1])
                                     + (x[2]-z_center)*(x[2]-z_center));
           amrex::Real tanh_dist = 0.5 * (1.0 - std::tanh((std::abs(pm_rad)-prob_parm.ignit_rad)/0.001));
-          state(i,j,k,TEMP) += tanh_dist * (1300.0-prob_parm.T_mean);
+          state(i,j,k,TEMP) += tanh_dist * (prob_parm.ignit_temp-prob_parm.T_mean);
         }
     }
 

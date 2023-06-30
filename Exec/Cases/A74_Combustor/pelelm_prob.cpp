@@ -118,4 +118,5 @@ void PeleLM::readProbParm()
    pp.query("ignite", PeleLM::prob_parm->do_ignit);
    pp.query("ignite_radius", PeleLM::prob_parm->ignit_rad);
    pp.query("ignite_lowZ", PeleLM::prob_parm->ignit_lowZ);
+   pp.query("ignite_temp", PeleLM::prob_parm->ignit_temp);
 }
