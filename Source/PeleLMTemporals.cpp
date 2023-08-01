@@ -40,10 +40,11 @@ void PeleLM::massBalance()
    // Compute the mass balance on the computational domain
    m_massNew = MFSum(GetVecOfConstPtrs(getDensityVect(AmrNewTime)),0);
    Real dmdt = (m_massNew - m_massOld) / m_dt;
-   Real massFluxBalance = AMREX_D_TERM(  m_domainMassFlux[0] + m_domainMassFlux[1],
+   /*Real massFluxBalance = AMREX_D_TERM(  m_domainMassFlux[0] + m_domainMassFlux[1],
                                        + m_domainMassFlux[2] + m_domainMassFlux[3],
-                                       + m_domainMassFlux[4] + m_domainMassFlux[5]);
+                                       + m_domainMassFlux[4] + m_domainMassFlux[5]);*/
 
+   Real massFluxBalance = m_domainMassFlux[4];
    tmpMassFile << m_nstep << " " << m_cur_time                          // Time info
                << " " << m_massNew                                      // mass
                << " " << dmdt                                           // mass temporal derivative

@@ -119,4 +119,13 @@ void PeleLM::readProbParm()
    pp.query("ignite_radius", PeleLM::prob_parm->ignit_rad);
    pp.query("ignite_lowZ", PeleLM::prob_parm->ignit_lowZ);
    pp.query("ignite_temp", PeleLM::prob_parm->ignit_temp);
+
+   pp.query("mfr_factor_pilot",PeleLM::prob_parm->mfr_factor_pilot);
+   pp.query("mfr_factor_cp00",PeleLM::prob_parm->mfr_factor_cp00);
+   pp.query("mfr_factor_cp01",PeleLM::prob_parm->mfr_factor_cp01);
+   pp.query("mfr_factor_cp02",PeleLM::prob_parm->mfr_factor_cp02);
+   pp.query("mfr_factor_cp03",PeleLM::prob_parm->mfr_factor_cp03);
+   pp.query("mfr_factor_idch",PeleLM::prob_parm->mfr_factor_idch);
+   pp.query("mfr_factor_odch",PeleLM::prob_parm->mfr_factor_odch);
+   pp.query("mfr_factor_bch",PeleLM::prob_parm->mfr_factor_bch);
 }

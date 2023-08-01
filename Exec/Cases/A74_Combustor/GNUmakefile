@@ -17,25 +17,26 @@ USE_EB          = TRUE
 USE_HYPRE       = FALSE
 
 # Compilation
-COMP            = gnu
+COMP            = llvm
 USE_MPI         = TRUE
 USE_OMP         = FALSE
 USE_CUDA        = FALSE
-USE_HIP         = FALSE
+USE_HIP         = TRUE
+
+PELE_USE_MAGMA  = TRUE
 
 # PeleLMeX
 CEXE_header    += EBUserDefined.H
 CEXE_sources   += DeriveUserDefined.cpp
 
 # PeleMP
-USE_PARTICLES   = TRUE
-SPRAY_FUEL_NUM  = 1
-CEXE_sources   += SprayParticlesInitInsert.cpp
-PELELM_USE_SPRAY = TRUE
+#USE_PARTICLES   = TRUE
+#SPRAY_FUEL_NUM  = 1
+#CEXE_sources   += SprayParticlesInitInsert.cpp
+#PELELM_USE_SPRAY = TRUE
 
 # PelePhysics
-Chemistry_Model = dodmethair_4sp
-#Chemistry_Model = dodecane_lu_qss 
+Chemistry_Model = dodecane_lu_qss
 Eos_Model	= Fuego
 Transport_Model = Simple
 

@@ -249,40 +249,72 @@ CalculateRadiusOnPlane(amrex::Real xval,
                        amrex::Real x_center,
                        amrex::Real y_center)
 {
-   return sqrt((xval-x_center)*(xval-x_center)+((yval-y_center)*(yval-y_center)));
+  return sqrt((xval-x_center)*(xval-x_center)+((yval-y_center)*(yval-y_center)));
+}
+
+AMREX_GPU_DEVICE
+AMREX_FORCE_INLINE
+amrex::Real
+CalculateMixtureFraction(amrex::Real non_dim_r)
+{
+  amrex::Real mixture_fraction=0.0;
+  amrex::Real fuel_mass_fraction=0.0;
+  if(non_dim_r>=0.9895)
+    {
+      mixture_fraction = -0.3926*non_dim_r+0.3926;
+    }
+  else if(non_dim_r>=0.8289)
+    {
+      mixture_fraction = 169.605257*pow(non_dim_r,5.0)-744.5464031*pow(non_dim_r,4.0)+1306.488623*pow(non_dim_r,3.0)-1145.458256*pow(non_dim_r,2.0)+501.7677282*non_dim_r-87.8513965;
+    }
+  else if(non_dim_r>=0.4158)
+    {
+      mixture_fraction =-0.00035592*pow(non_dim_r,3.0)+0.00258535*pow(non_dim_r,2.0)-0.00431028*non_dim_r+0.0037782;
+    }
+  else if(non_dim_r>=0.0132)
+    {
+      mixture_fraction =-3.52950391*pow(non_dim_r,5.0)+4.55039337*pow(non_dim_r,4.0)-2.28201112*pow(non_dim_r,3.0)+0.56780962*pow(non_dim_r,2.0)-0.07716233*non_dim_r+0.00814645;
+    }
+  else
+    {
+      mixture_fraction = 0.5479*non_dim_r;
+    }
+
+  return(mixture_fraction);
 }
 
 AMREX_GPU_DEVICE
 AMREX_FORCE_INLINE
 void
 bcnormal(
-  const amrex::Real x[AMREX_SPACEDIM],
-  const int m_nAux,
-  amrex::Real s_ext[NVAR],
-  const int idir,
-  const int sgn,
-  const amrex::Real time,
-  amrex::GeometryData const& geomdata,
-  ProbParm const& prob_parm,
-  pele::physics::PMF::PmfData::DataContainer const *pmf_data)
+    const amrex::Real x[AMREX_SPACEDIM],
+    const int m_nAux,
+    amrex::Real s_ext[NVAR],
+    const int idir,
+    const int sgn,
+    const amrex::Real time,
+    amrex::GeometryData const& geomdata,
+    ProbParm const& prob_parm,
+    pele::physics::PMF::PmfData::DataContainer const *pmf_data)
 {
   const amrex::Real* prob_lo = geomdata.ProbLo();
   constexpr amrex::Real Pi = 3.14159265358979323846264338327950288;
   constexpr amrex::Real deg_to_radians = Pi/180.0;
   auto eos = pele::physics::PhysicsType::eos();
 
-  // Radial coordinate of the point on boundary. The inlets lie on lowZ X-Y plane
-  amrex::Real x_c = x[0];
-  amrex::Real y_c = x[1];
-  amrex::Real z_c = x[2];
-  amrex::Real radius = sqrt(x[0]*x[0]+x[1]*x[1]);
-
   // Default chamber gas composition
   amrex::Real massfrac[NUM_SPECIES] = {0.0};
+  
+    //Diffusion flame properties
+  amrex::Real Y_Fuel_0=1.0;
+  amrex::Real Y_O2_0=0.233;
+  amrex::Real Y_N2_0=0.767;
+  
   massfrac[O2_ID] = 0.233;
   massfrac[N2_ID] = 0.767;
 
   // Set up premixer composition
+  /*This was assuming uniform mixture fraction at inlets. But we have fmix profiles from Fluent simulations.
   amrex::GpuArray<amrex::Real,2*4> prem_centers{-0.0163322, 0.0163322,
                                                  0.0163322, 0.0163322,
                                                 -0.0163322,-0.0163322,
@@ -293,7 +325,7 @@ bcnormal(
     if (pm_rad < 0.0083312 && pm_rad >= 0.0057404) {
        set_Y_from_Phi(prob_parm.premix_phi,massfrac);
     }
-  }
+  }*/
 
   // Thermo/fluid variables
   amrex::Real p_cgs = prob_parm.P_mean * 10.0;		//From user input and converting it into cgs unit
@@ -305,12 +337,16 @@ bcnormal(
   eos.TY2H(s_ext[TEMP], massfrac, RhoH_temp);
   s_ext[RHOH] = RhoH_temp * 1.0e-4 * s_ext[DENSITY];    // CGS -> MKS conversion
 
-
   for (int n = 0; n < NUM_SPECIES; n++) 		// Specifying inflow gas composition
-  {
-     s_ext[FIRSTSPEC+n] = massfrac[n] * s_ext[DENSITY];
-  }
+    {
+      s_ext[FIRSTSPEC+n] = massfrac[n] * s_ext[DENSITY];
+    }
 
+  //Radial coordinate of the point on boundary. The inlets lie on Y-Z plane
+  amrex::Real x_c = x[0];
+  amrex::Real y_c = x[1];
+  amrex::Real z_c = x[2];
+  amrex::Real radius=sqrt(std::pow((x[0]),2.0)+pow((x[1]),2.0));
 
   bool use_strip_method_for_bafflecoolingholes=false;
 
@@ -362,8 +398,8 @@ bcnormal(
   amrex::Array<amrex::Real,3> idch_point0_normal     ={0.0,0.0,0.7095693667};
 
   const amrex::Real lbm_to_kg=0.453592;
-  amrex::Real mfr_odch=0.02416*lbm_to_kg;
-  amrex::Real mfr_idch=0.06464*lbm_to_kg;
+  amrex::Real mfr_idch=0.02416*lbm_to_kg;
+  amrex::Real mfr_odch=0.06464*lbm_to_kg;
   amrex::Real mfr_bch=0.09*2*lbm_to_kg;
 
   amrex::Real area_per_odch=Pi*(0.8255*0.001)*(0.8255*0.001);
@@ -374,6 +410,31 @@ bcnormal(
   amrex::Real vel_mag_idch=mfr_idch/(area_per_idch*s_ext[DENSITY]*num_of_inner_dch);
   amrex::Real vel_mag_bch=mfr_bch/(area_per_bch*s_ext[DENSITY]*num_of_baffle_cooling_holes*4);
 
+  //amrex::Real vel_mag_odch=0.0;
+  //amrex::Real vel_mag_idch=0.0;
+  //amrex::Real vel_mag_bch=0.0;
+  amrex::Real rmax_pilot = 0.005080;
+  amrex::Real rmin_pilot = 0.0;
+
+  amrex::Real x_cp_00 = -0.0163322;
+  amrex::Real y_cp_00 = 0.0163322;
+
+  amrex::Real x_cp_01 = 0.0163322;
+  amrex::Real y_cp_01 = 0.0163322;
+
+  amrex::Real x_cp_02 = -0.0163322;
+  amrex::Real y_cp_02 = -0.0163322;
+
+  amrex::Real x_cp_03 = 0.0163322;
+  amrex::Real y_cp_03 = -0.0163322;
+
+  amrex::Real rmax_cp = 0.0083312;
+  amrex::Real rmin_cp = 0.0057404; 
+
+  amrex::Real radius_cp00 = sqrt(std::pow((x[0]-x_cp_00),2.0)+pow((x[1]-y_cp_00),2.0));
+  amrex::Real radius_cp01 = sqrt(std::pow((x[0]-x_cp_01),2.0)+pow((x[1]-y_cp_01),2.0));
+  amrex::Real radius_cp02 = sqrt(std::pow((x[0]-x_cp_02),2.0)+pow((x[1]-y_cp_02),2.0));
+  amrex::Real radius_cp03 = sqrt(std::pow((x[0]-x_cp_03),2.0)+pow((x[1]-y_cp_03),2.0));
 
   //Use a strip for modeling baffle cooling holes
   if(use_strip_method_for_bafflecoolingholes)
@@ -389,23 +450,23 @@ bcnormal(
       else if(y_c>=ymax_bch_bot and y_c<=ymin_bch_bot and x_c>=xmin_bch_bot and x_c<=xmax_bch_bot)
         {
           s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
-                    s_ext[VELY] = 0.0;
-                    s_ext[VELZ] = zvel_bch;
+          s_ext[VELY] = 0.0;
+          s_ext[VELZ] = zvel_bch;
         } //front
       else if(y_c>=ymin_bch_frt and y_c<=ymax_bch_frt and x_c>=xmin_bch_frt and x_c<=xmax_bch_frt)
         {
           s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
-                    s_ext[VELY] = 0.0;
-                    s_ext[VELZ] = zvel_bch;
+          s_ext[VELY] = 0.0;
+          s_ext[VELZ] = zvel_bch;
         }
       else if (y_c<=ymax_bch_bak and y_c>=ymin_bch_bak and x_c>=xmax_bch_bak and x_c<=xmin_bch_bak)
         {
           s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
-                    s_ext[VELY] = 0.0;
-                    s_ext[VELZ] = zvel_bch;
+          s_ext[VELY] = 0.0;
+          s_ext[VELZ] = zvel_bch;
         }
     }
-  else  //Use circular patches as inlets for baffle cooling holes
+  else  //Use circular patches as inlets for baffle cooling holes. only air
     {
       if(y_c>=ymin_bch_top and y_c<=ymax_bch_top and x_c>=xmin_bch_top-radius_baffle_cooling_holes and x_c<=xmax_bch_top+radius_baffle_cooling_holes)
         {
@@ -416,9 +477,9 @@ bcnormal(
               amrex::Real rad=sqrt(std::pow((x[1]-y_center_hole),2.0)+pow((x[0]-x_center_hole),2.0));
               if(rad<=radius_baffle_cooling_holes)
                 {
-                 	s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
-                        s_ext[VELY] = 0.0;
-                        s_ext[VELZ] = vel_mag_bch;
+                  s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
+                  s_ext[VELY] = 0.0;
+                  s_ext[VELZ] = vel_mag_bch*prob_parm.mfr_factor_bch;
                 }
             }
         }
@@ -432,8 +493,8 @@ bcnormal(
               if(rad<=radius_baffle_cooling_holes)
                 {
                   s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
-                            s_ext[VELY] = 0.0;
-                            s_ext[VELZ] = vel_mag_bch;
+                  s_ext[VELY] = 0.0;
+                  s_ext[VELZ] = vel_mag_bch*prob_parm.mfr_factor_bch;
                 }
             }
         } //front
@@ -448,7 +509,7 @@ bcnormal(
                 {
                   s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
                   s_ext[VELY] = 0.0;
-                  s_ext[VELZ] = vel_mag_bch;
+                  s_ext[VELZ] = vel_mag_bch*prob_parm.mfr_factor_bch;
                 }
             }
         }
@@ -463,12 +524,10 @@ bcnormal(
                 {
                   s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
                   s_ext[VELY] = 0.0;
-                  s_ext[VELZ] = vel_mag_bch;
+                  s_ext[VELZ] = vel_mag_bch*prob_parm.mfr_factor_bch;
                 }
             }
         }
-
-
 
     }
 
@@ -480,7 +539,7 @@ bcnormal(
           amrex::Real theta_in_radians=theta*deg_to_radians;
           amrex::Real y_center_odch=radius_odchs*sin(theta_in_radians);
           amrex::Real x_center_odch=-radius_odchs*cos(theta_in_radians);
-          //amrex::Print()<<"\n "<<y_center_odch<<" "<<x_center_odch;
+
           amrex::Real rad=sqrt(std::pow((x[1]-y_center_odch),2.0)+pow((x[0]-x_center_odch),2.0));
           amrex::Real nz = x[2]-odch_point0_normal[2];
           amrex::Real ny = y_center_odch-odch_point0_normal[1];
@@ -489,43 +548,139 @@ bcnormal(
           nx=nx/normal;
           ny=ny/normal;
           nz=nz/normal;
+          //amrex::Print()<<"\n"<<theta<<" "<<x_center_odch<<" "<<y_center_odch<<" "<<x[2]<<" "<<nx<<" "<<ny<<" "<<nz;
           if(rad<=radius_outer_dome_cooling_hole)
             {
-              //amrex::Print()<<"\n Yes";
-
-              s_ext[VELX] = vel_mag_odch*nx;           //Dummy value. change it before prod run
-              s_ext[VELY] = vel_mag_odch*ny;
-              s_ext[VELZ] = vel_mag_odch*nz;
+              s_ext[VELX] = vel_mag_odch*nx*prob_parm.mfr_factor_odch;           //Dummy value. change it before prod run
+              s_ext[VELY] = vel_mag_odch*ny*prob_parm.mfr_factor_odch;
+              s_ext[VELZ] = vel_mag_odch*nz*prob_parm.mfr_factor_odch;
             }
         }
     }
 
   //Model inner dome cooling holes
-    if(radius<=rmax_inner_dch and radius>=rmin_inner_dch)
-      {
-        for(amrex::Real theta=delta_theta/2.0;theta<360;theta=theta+delta_theta)
-          {
-            amrex::Real theta_in_radians=theta*deg_to_radians;
-            amrex::Real y_center_idch=radius_idchs*sin(theta_in_radians);
-            amrex::Real x_center_idch=-radius_idchs*cos(theta_in_radians);
-            amrex::Real rad=sqrt(std::pow((x[1]-y_center_idch),2.0)+pow((x[0]-x_center_idch),2.0));
-            amrex::Real nz = x[2]-idch_point0_normal[2];
-            amrex::Real ny = y_center_idch-idch_point0_normal[1];
-            amrex::Real nx = x_center_idch-idch_point0_normal[0];
-            amrex::Real normal = sqrt(nx*nx+ny*ny+nz*nz);
-            nx=nx/normal;
-            ny=ny/normal;
-            nz=nz/normal;
-            if(rad<=radius_inner_dome_cooling_hole)
-              {
-                s_ext[VELX] = vel_mag_idch*nx;           //Dummy value. change it before prod run
-                s_ext[VELY] = vel_mag_idch*ny;
-                s_ext[VELZ] = vel_mag_odch*nz;
-              }
-          }
-      }
+  if(radius<=rmax_inner_dch and radius>=rmin_inner_dch)
+    {
+      for(amrex::Real theta=delta_theta/2.0;theta<360;theta=theta+delta_theta)
+        {
+          amrex::Real theta_in_radians=theta*deg_to_radians;
+          amrex::Real y_center_idch=radius_idchs*sin(theta_in_radians);
+          amrex::Real x_center_idch=-radius_idchs*cos(theta_in_radians);
+          amrex::Real rad=sqrt(std::pow((x[1]-y_center_idch),2.0)+pow((x[0]-x_center_idch),2.0));
+          amrex::Real nz = x[2]-idch_point0_normal[2];
+          amrex::Real ny = y_center_idch-idch_point0_normal[1];
+          amrex::Real nx = x_center_idch-idch_point0_normal[0];
+          amrex::Real normal = sqrt(nx*nx+ny*ny+nz*nz);
+          nx=nx/normal;
+          ny=ny/normal;
+          nz=nz/normal;
+          if(rad<=radius_inner_dome_cooling_hole)
+            {
+              s_ext[VELX] = vel_mag_idch*nx*prob_parm.mfr_factor_idch;           //Dummy value. change it before prod run
+              s_ext[VELY] = vel_mag_idch*ny*prob_parm.mfr_factor_idch;
+              s_ext[VELZ] = vel_mag_idch*nz*prob_parm.mfr_factor_idch;
+            }
+        }
+    }
 
+  if(radius<=rmax_pilot and radius>=rmin_pilot) //For the moment, only air
+    {
+      s_ext[VELX] = s_ext[VELX]*prob_parm.mfr_factor_pilot;
+      s_ext[VELY] = s_ext[VELY]*prob_parm.mfr_factor_pilot;
+      s_ext[VELZ] = s_ext[VELZ]*prob_parm.mfr_factor_pilot;
+    }
+  if(radius_cp00<=rmax_cp and radius_cp00>=rmin_cp)
+    {
+      s_ext[VELX] = s_ext[VELX]*prob_parm.mfr_factor_cp00;
+      s_ext[VELY] = s_ext[VELY]*prob_parm.mfr_factor_cp00;
+      s_ext[VELZ] = s_ext[VELZ]*prob_parm.mfr_factor_cp00;
+      amrex::Real non_dim_r=(radius_cp00-rmin_cp)/(rmax_cp-rmin_cp);
+      amrex::Real mixture_fraction =  CalculateMixtureFraction(non_dim_r);
 
+      massfrac[NC12H26_ID] = mixture_fraction*Y_Fuel_0;
+      massfrac[O2_ID] = Y_O2_0*(1-mixture_fraction);
+      massfrac[N2_ID] = 1.0-massfrac[NC12H26_ID]-massfrac[O2_ID];
+
+      s_ext[TEMP] = prob_parm.T_mean;                           //From user input
+      eos.PYT2R(p_cgs, massfrac, s_ext[TEMP], rho_cgs);
+      s_ext[DENSITY] = rho_cgs * 1.0e3;                         // CGS -> MKS conversion
+      eos.TY2H(s_ext[TEMP], massfrac, RhoH_temp);
+      s_ext[RHOH] = RhoH_temp * 1.0e-4 * s_ext[DENSITY];        // CGS -> MKS conversion
+
+      for (int n = 0; n < NUM_SPECIES; n++)
+        {
+          s_ext[FIRSTSPEC+n] = massfrac[n] * s_ext[DENSITY];
+        }
+    }
+  if(radius_cp01<=rmax_cp and radius_cp01>=rmin_cp)
+    {
+      s_ext[VELX] = s_ext[VELX]*prob_parm.mfr_factor_cp01;
+      s_ext[VELY] = s_ext[VELY]*prob_parm.mfr_factor_cp01;
+      s_ext[VELZ] = s_ext[VELZ]*prob_parm.mfr_factor_cp01;
+      amrex::Real non_dim_r=(radius_cp01-rmin_cp)/(rmax_cp-rmin_cp);
+      amrex::Real mixture_fraction =  CalculateMixtureFraction(non_dim_r);
+
+      massfrac[NC12H26_ID] = mixture_fraction*Y_Fuel_0;
+      massfrac[O2_ID] = Y_O2_0*(1-mixture_fraction);
+      massfrac[N2_ID] = 1.0-massfrac[NC12H26_ID]-massfrac[O2_ID];
+
+      s_ext[TEMP] = prob_parm.T_mean;                           //From user input
+      eos.PYT2R(p_cgs, massfrac, s_ext[TEMP], rho_cgs);
+      s_ext[DENSITY] = rho_cgs * 1.0e3;                         // CGS -> MKS conversion
+      eos.TY2H(s_ext[TEMP], massfrac, RhoH_temp);
+      s_ext[RHOH] = RhoH_temp * 1.0e-4 * s_ext[DENSITY];        // CGS -> MKS conversion
+
+      for (int n = 0; n < NUM_SPECIES; n++)
+        {
+          s_ext[FIRSTSPEC+n] = massfrac[n] * s_ext[DENSITY];
+        }
+    }
+  if(radius_cp02<=rmax_cp and radius_cp02>=rmin_cp)
+    {
+      s_ext[VELX] = s_ext[VELX]*prob_parm.mfr_factor_cp02;
+      s_ext[VELY] = s_ext[VELY]*prob_parm.mfr_factor_cp02;
+      s_ext[VELZ] = s_ext[VELZ]*prob_parm.mfr_factor_cp02;
+      amrex::Real non_dim_r=(radius_cp02-rmin_cp)/(rmax_cp-rmin_cp);
+      amrex::Real mixture_fraction = CalculateMixtureFraction(non_dim_r);
+
+      massfrac[NC12H26_ID] = mixture_fraction*Y_Fuel_0;
+      massfrac[O2_ID] = Y_O2_0*(1-mixture_fraction);
+      massfrac[N2_ID] = 1.0-massfrac[NC12H26_ID]-massfrac[O2_ID];
+
+      s_ext[TEMP] = prob_parm.T_mean;                           //From user input
+      eos.PYT2R(p_cgs, massfrac, s_ext[TEMP], rho_cgs);
+      s_ext[DENSITY] = rho_cgs * 1.0e3;                         // CGS -> MKS conversion
+      eos.TY2H(s_ext[TEMP], massfrac, RhoH_temp);
+      s_ext[RHOH] = RhoH_temp * 1.0e-4 * s_ext[DENSITY];        // CGS -> MKS conversion
+
+      for (int n = 0; n < NUM_SPECIES; n++)
+        {
+          s_ext[FIRSTSPEC+n] = massfrac[n] * s_ext[DENSITY];
+        }
+    }
+  if(radius_cp03<=rmax_cp and radius_cp03>=rmin_cp)
+    {
+      s_ext[VELX] = s_ext[VELX]*prob_parm.mfr_factor_cp03;
+      s_ext[VELY] = s_ext[VELY]*prob_parm.mfr_factor_cp03;
+      s_ext[VELZ] = s_ext[VELZ]*prob_parm.mfr_factor_cp03;
+      amrex::Real non_dim_r=(radius_cp03-rmin_cp)/(rmax_cp-rmin_cp);
+      amrex::Real mixture_fraction = CalculateMixtureFraction(non_dim_r);
+
+      massfrac[NC12H26_ID] = mixture_fraction*Y_Fuel_0;
+      massfrac[O2_ID] = Y_O2_0*(1-mixture_fraction);
+      massfrac[N2_ID] = 1.0-massfrac[NC12H26_ID]-massfrac[O2_ID];
+
+      s_ext[TEMP] = prob_parm.T_mean;                           //From user input
+      eos.PYT2R(p_cgs, massfrac, s_ext[TEMP], rho_cgs);
+      s_ext[DENSITY] = rho_cgs * 1.0e3;                         // CGS -> MKS conversion
+      eos.TY2H(s_ext[TEMP], massfrac, RhoH_temp);
+      s_ext[RHOH] = RhoH_temp * 1.0e-4 * s_ext[DENSITY];        // CGS -> MKS conversion
+
+      for (int n = 0; n < NUM_SPECIES; n++)
+        {
+          s_ext[FIRSTSPEC+n] = massfrac[n] * s_ext[DENSITY];
+        }
+    }
 
 }
 

@@ -14,6 +14,16 @@ struct ProbParm
    amrex::Real Y_N2_FUEL=0.434037;
    amrex::Real Y_C12H26_FUEL=0.5;
 
+   //mass flow correction factors
+   amrex::Real mfr_factor_pilot=1.0;
+   amrex::Real mfr_factor_cp00=1.0;
+   amrex::Real mfr_factor_cp01=1.0;
+   amrex::Real mfr_factor_cp02=1.0;
+   amrex::Real mfr_factor_cp03=1.0;
+   amrex::Real mfr_factor_idch=1.0;
+   amrex::Real mfr_factor_odch=1.0;
+   amrex::Real mfr_factor_bch=1.0;
+   
    // Chamber conditions
    amrex::Real P_mean        = 101325.0;
    amrex::Real T_mean        = 300.0;
