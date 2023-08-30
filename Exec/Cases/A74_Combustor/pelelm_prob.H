@@ -11,6 +11,62 @@
 #include <PMFData.H>
 #include <PelePhysics.H>
 
+// Some functions to compute the overlap area between a square and circle
+// more or less copied from: https://stackoverflow.com/questions/622287/area-of-intersection-between-circle-and-rectangle
+
+// helper function
+AMREX_GPU_DEVICE
+AMREX_FORCE_INLINE
+amrex::Real
+section_area(const amrex::Real x0,
+             const amrex::Real x1,
+             const amrex::Real h,
+             const amrex::Real r) {
+  const amrex::Real sec = (h < r) ? std::sqrt(r*r - h*h) : 0;
+  const amrex::Real arg1 = amrex::max(-sec, amrex::min(sec, x1) );
+  const amrex::Real arg2 = amrex::max(-sec, amrex::min(sec, x0) );
+  const amrex::Real term1 = 0.5* (std::sqrt(1.0 - arg1*arg1/(r*r)) * arg1*r + r*r*std::asin(arg1/r) - 2.0 * h * arg1);
+  const amrex::Real term2 = 0.5* (std::sqrt(1.0 - arg2*arg2/(r*r)) * arg2*r + r*r*std::asin(arg2/r) - 2.0 * h * arg2);
+  return term1 - term2;
+}
+
+// Area of a square and circle intersection
+AMREX_GPU_DEVICE
+AMREX_FORCE_INLINE
+amrex::Real
+square_circle_intersection_area(
+                                const amrex::Real x0,
+                                const amrex::Real x1,
+                                const amrex::Real y0,
+                                const amrex::Real y1,
+                                const amrex::Real cx,
+                                const amrex::Real cy,
+                                const amrex::Real r
+)
+{
+  // We assume coordinates of the box are passed in sorted order x0 = xlo, x1 = xhi, etc
+  AMREX_ASSERT(x1 > x0);
+  AMREX_ASSERT(y1 > y0);
+  AMREX_ASSERT(r >= 0.0);
+
+  // Convert to coordinates centered on circle
+  const amrex::Real x0new = x0 - cx;
+  const amrex::Real x1new = x1 - cx;
+  const amrex::Real y0new = y0 - cy;
+  const amrex::Real y1new = y1 - cy;
+
+  // Compute the area
+  const amrex::Real sign = copysign(1.0,y0new) * copysign(1.0,y1new);
+  const amrex::Real y0mod = amrex::min(std::abs(y0new), std::abs(y1new));
+  const amrex::Real y1mod = amrex::max(std::abs(y0new), std::abs(y1new));
+  const amrex::Real area0 = section_area(x0new, x1new, 0.0, r);
+  const amrex::Real area1 = area0 - section_area(x0new, x1new, y0mod, r);
+  const amrex::Real area2 = area0 - section_area(x0new, x1new, y1mod, r);
+
+  return area2 - sign*area1;
+}
+
+
 // -----------------------------------------------------------
 // Search for the closest index in an array to a given value
 // using the bisection technique.
@@ -304,12 +360,12 @@ bcnormal(
 
   // Default chamber gas composition
   amrex::Real massfrac[NUM_SPECIES] = {0.0};
-  
+
     //Diffusion flame properties
   amrex::Real Y_Fuel_0=1.0;
   amrex::Real Y_O2_0=0.233;
   amrex::Real Y_N2_0=0.767;
-  
+
   massfrac[O2_ID] = 0.233;
   massfrac[N2_ID] = 0.767;
 
@@ -345,7 +401,7 @@ bcnormal(
   //Radial coordinate of the point on boundary. The inlets lie on Y-Z plane
   amrex::Real x_c = x[0];
   amrex::Real y_c = x[1];
-  amrex::Real z_c = x[2];
+  amrex::Real z_c = geomdata.ProbLo(2); // assumes zlo face, we're actually on the face not cell center
   amrex::Real radius=sqrt(std::pow((x[0]),2.0)+pow((x[1]),2.0));
 
   bool use_strip_method_for_bafflecoolingholes=false;
@@ -397,14 +453,14 @@ bcnormal(
   int num_of_inner_dch=52;
   amrex::Array<amrex::Real,3> idch_point0_normal     ={0.0,0.0,0.7095693667};
 
-  const amrex::Real lbm_to_kg=0.453592;
-  amrex::Real mfr_idch=0.02416*lbm_to_kg;
-  amrex::Real mfr_odch=0.06464*lbm_to_kg;
-  amrex::Real mfr_bch=0.09*2*lbm_to_kg;
+  constexpr amrex::Real lbm_to_kg=0.453592;
+  constexpr amrex::Real mfr_idch=0.02416*lbm_to_kg;
+  constexpr amrex::Real mfr_odch=0.06464*lbm_to_kg;
+  constexpr amrex::Real mfr_bch=0.09*2*lbm_to_kg;
 
-  amrex::Real area_per_odch=Pi*(0.8255*0.001)*(0.8255*0.001);
-  amrex::Real area_per_idch=Pi*(0.4445*0.001)*(0.4445*0.001);
-  amrex::Real area_per_bch =Pi*(0.79375*0.001)*(0.79375*0.001);
+  amrex::Real area_per_odch=Pi*(radius_outer_dome_cooling_hole)*(radius_outer_dome_cooling_hole);
+  amrex::Real area_per_idch=Pi*(radius_inner_dome_cooling_hole)*(radius_inner_dome_cooling_hole);
+  amrex::Real area_per_bch =Pi*(radius_baffle_cooling_holes)*(radius_baffle_cooling_holes);
 
   amrex::Real vel_mag_odch=mfr_odch/(area_per_odch*s_ext[DENSITY]*num_of_outer_dch);
   amrex::Real vel_mag_idch=mfr_idch/(area_per_idch*s_ext[DENSITY]*num_of_inner_dch);
@@ -429,137 +485,184 @@ bcnormal(
   amrex::Real y_cp_03 = -0.0163322;
 
   amrex::Real rmax_cp = 0.0083312;
-  amrex::Real rmin_cp = 0.0057404; 
+  amrex::Real rmin_cp = 0.0057404;
 
   amrex::Real radius_cp00 = sqrt(std::pow((x[0]-x_cp_00),2.0)+pow((x[1]-y_cp_00),2.0));
   amrex::Real radius_cp01 = sqrt(std::pow((x[0]-x_cp_01),2.0)+pow((x[1]-y_cp_01),2.0));
   amrex::Real radius_cp02 = sqrt(std::pow((x[0]-x_cp_02),2.0)+pow((x[1]-y_cp_02),2.0));
   amrex::Real radius_cp03 = sqrt(std::pow((x[0]-x_cp_03),2.0)+pow((x[1]-y_cp_03),2.0));
 
+  const amrex::Real* dx      = geomdata.CellSize();
+  const amrex::Real diag_dist = 0.5*sqrt(dx[0]*dx[0] + dx[1]*dx[1]);
+  const amrex::Real face_xlo = x[0] - 0.5*dx[0];
+  const amrex::Real face_xhi = x[0] + 0.5*dx[0];
+  const amrex::Real face_ylo = x[1] - 0.5*dx[1];
+  const amrex::Real face_yhi = x[1] + 0.5*dx[1];
+  const amrex::Real inv_area = 1.0 / (dx[0] * dx[1]);
+  int in_inlet = 0;
+
   //Use a strip for modeling baffle cooling holes
   if(use_strip_method_for_bafflecoolingholes)
     {
       //top
-      if(y_c>=ymin_bch_top and y_c<=ymax_bch_top and x_c>=xmin_bch_top and x_c<=xmax_bch_top)
+      if( (y_c>=ymin_bch_top and y_c<=ymax_bch_top and x_c>=xmin_bch_top and x_c<=xmax_bch_top)
+          || (y_c>=ymax_bch_bot and y_c<=ymin_bch_bot and x_c>=xmin_bch_bot and x_c<=xmax_bch_bot)
+          || (y_c>=ymin_bch_frt and y_c<=ymax_bch_frt and x_c>=xmin_bch_frt and x_c<=xmax_bch_frt)
+          || (y_c<=ymax_bch_bak and y_c>=ymin_bch_bak and x_c>=xmax_bch_bak and x_c<=xmin_bch_bak) )
         {
           s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
           s_ext[VELY] = 0.0;
           s_ext[VELZ] = zvel_bch;
-
-        } //bottom
-      else if(y_c>=ymax_bch_bot and y_c<=ymin_bch_bot and x_c>=xmin_bch_bot and x_c<=xmax_bch_bot)
-        {
-          s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
-          s_ext[VELY] = 0.0;
-          s_ext[VELZ] = zvel_bch;
-        } //front
-      else if(y_c>=ymin_bch_frt and y_c<=ymax_bch_frt and x_c>=xmin_bch_frt and x_c<=xmax_bch_frt)
-        {
-          s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
-          s_ext[VELY] = 0.0;
-          s_ext[VELZ] = zvel_bch;
-        }
-      else if (y_c<=ymax_bch_bak and y_c>=ymin_bch_bak and x_c>=xmax_bch_bak and x_c<=xmin_bch_bak)
-        {
-          s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
-          s_ext[VELY] = 0.0;
-          s_ext[VELZ] = zvel_bch;
+          in_inlet += 1;
         }
     }
   else  //Use circular patches as inlets for baffle cooling holes. only air
     {
-      if(y_c>=ymin_bch_top and y_c<=ymax_bch_top and x_c>=xmin_bch_top-radius_baffle_cooling_holes and x_c<=xmax_bch_top+radius_baffle_cooling_holes)
+      if(y_c>=ymin_bch_top-diag_dist and y_c<=ymax_bch_top+diag_dist and x_c>=xmin_bch_top-diag_dist-radius_baffle_cooling_holes and x_c<=xmax_bch_top+diag_dist+radius_baffle_cooling_holes)
         {
           for(int i=0;i<num_of_baffle_cooling_holes;i++)
             {
               amrex::Real y_center_hole=0.5*(ymin_bch_top+ymax_bch_top);
               amrex::Real x_center_hole=xmin_bch_top+i*dist_between_bch;
               amrex::Real rad=sqrt(std::pow((x[1]-y_center_hole),2.0)+pow((x[0]-x_center_hole),2.0));
-              if(rad<=radius_baffle_cooling_holes)
-                {
-                  s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
+              if(rad<=radius_baffle_cooling_holes-diag_dist) {
+                // face is fully in inlet
+                s_ext[VELX] = 0.0;
+                s_ext[VELY] = 0.0;
+                s_ext[VELZ] = vel_mag_bch*prob_parm.mfr_factor_bch;
+                in_inlet += 1;
+              } else if (rad<=radius_baffle_cooling_holes+diag_dist) {
+                // face may be partially covered by inlet
+                amrex::Real area = square_circle_intersection_area(face_xlo, face_xhi, face_ylo, face_yhi, x_center_hole, y_center_hole, radius_baffle_cooling_holes);
+                if (area > 0.0) {
+                  amrex::Real area_frac = area * inv_area;
+                  s_ext[VELX] = 0.0;
                   s_ext[VELY] = 0.0;
-                  s_ext[VELZ] = vel_mag_bch*prob_parm.mfr_factor_bch;
+                  s_ext[VELZ] = vel_mag_bch*prob_parm.mfr_factor_bch * area_frac;
+                  in_inlet += 1;
                 }
+              }
             }
         }
-      else if(y_c>=ymax_bch_bot and y_c<=ymin_bch_bot and x_c>=xmin_bch_bot and x_c<=xmax_bch_bot)
+      else if(y_c>=ymax_bch_bot-diag_dist and y_c<=ymin_bch_bot+diag_dist and x_c>=xmin_bch_bot-radius_baffle_cooling_holes-diag_dist and x_c<=xmax_bch_bot+diag_dist+radius_baffle_cooling_holes)
         {
           for(int i=0;i<num_of_baffle_cooling_holes;i++)
             {
               amrex::Real y_center_hole=0.5*(ymin_bch_bot+ymax_bch_bot);
               amrex::Real x_center_hole=xmin_bch_bot+i*dist_between_bch;
               amrex::Real rad=sqrt(std::pow((x[1]-y_center_hole),2.0)+pow((x[0]-x_center_hole),2.0));
-              if(rad<=radius_baffle_cooling_holes)
-                {
-                  s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
+              if(rad<=radius_baffle_cooling_holes-diag_dist) {
+                // face is fully in inlet
+                s_ext[VELX] = 0.0;
+                s_ext[VELY] = 0.0;
+                s_ext[VELZ] = vel_mag_bch*prob_parm.mfr_factor_bch;
+                in_inlet += 1;
+              } else if (rad<=radius_baffle_cooling_holes+diag_dist) {
+                // face may be partially covered by inlet
+                amrex::Real area = square_circle_intersection_area(face_xlo, face_xhi, face_ylo, face_yhi, x_center_hole, y_center_hole, radius_baffle_cooling_holes);
+                if (area > 0.0) {
+                  amrex::Real area_frac = area * inv_area;
+                  s_ext[VELX] = 0.0;
                   s_ext[VELY] = 0.0;
-                  s_ext[VELZ] = vel_mag_bch*prob_parm.mfr_factor_bch;
+                  s_ext[VELZ] = vel_mag_bch*prob_parm.mfr_factor_bch * area_frac;
+                  in_inlet += 1;
                 }
+              }
             }
         } //front
-      else if(y_c>=ymin_bch_frt and y_c<=ymax_bch_frt and x_c>=xmin_bch_frt and x_c<=xmax_bch_frt)
+      else if(y_c>=ymin_bch_frt-radius_baffle_cooling_holes-diag_dist and y_c<=ymax_bch_frt+radius_baffle_cooling_holes+diag_dist and x_c>=xmin_bch_frt-diag_dist and x_c<=xmax_bch_frt+diag_dist)
         {
           for(int i=0;i<num_of_baffle_cooling_holes;i++)
             {
               amrex::Real y_center_hole=ymin_bch_frt+i*dist_between_bch;
               amrex::Real x_center_hole=0.5*(xmin_bch_frt+xmax_bch_frt);
               amrex::Real rad=sqrt(std::pow((x[1]-y_center_hole),2.0)+pow((x[0]-x_center_hole),2.0));
-              if(rad<=radius_baffle_cooling_holes)
-                {
-                  s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
+              if(rad<=radius_baffle_cooling_holes-diag_dist) {
+                // face is fully in inlet
+                s_ext[VELX] = 0.0;
+                s_ext[VELY] = 0.0;
+                s_ext[VELZ] = vel_mag_bch*prob_parm.mfr_factor_bch;
+                in_inlet += 1;
+              } else if (rad<=radius_baffle_cooling_holes+diag_dist) {
+                // face may be partially covered by inlet
+                amrex::Real area = square_circle_intersection_area(face_xlo, face_xhi, face_ylo, face_yhi, x_center_hole, y_center_hole, radius_baffle_cooling_holes);
+                if (area > 0.0) {
+                  amrex::Real area_frac = area * inv_area;
+                  s_ext[VELX] = 0.0;
                   s_ext[VELY] = 0.0;
-                  s_ext[VELZ] = vel_mag_bch*prob_parm.mfr_factor_bch;
+                  s_ext[VELZ] = vel_mag_bch*prob_parm.mfr_factor_bch * area_frac;
+                  in_inlet += 1;
                 }
+              }
             }
         }
-      else if (y_c<=ymax_bch_bak and y_c>=ymin_bch_bak and x_c>=xmax_bch_bak and x_c<=xmin_bch_bak)
+      else if (y_c<=ymax_bch_bak+radius_baffle_cooling_holes+diag_dist and y_c>=ymin_bch_bak-radius_baffle_cooling_holes-diag_dist and x_c>=xmax_bch_bak-diag_dist and x_c<=xmin_bch_bak+diag_dist)
         {
           for(int i=0;i<num_of_baffle_cooling_holes;i++)
             {
               amrex::Real y_center_hole=ymin_bch_bak+i*dist_between_bch;
               amrex::Real x_center_hole=0.5*(xmin_bch_bak+xmax_bch_bak);
               amrex::Real rad=sqrt(std::pow((x[1]-y_center_hole),2.0)+pow((x[0]-x_center_hole),2.0));
-              if(rad<=radius_baffle_cooling_holes)
-                {
-                  s_ext[VELX] = 0.0;           //Dummy value. change it before prod run
+              if(rad<=radius_baffle_cooling_holes-diag_dist) {
+                // face is fully in inlet
+                s_ext[VELX] = 0.0;
+                s_ext[VELY] = 0.0;
+                s_ext[VELZ] = vel_mag_bch*prob_parm.mfr_factor_bch;
+                in_inlet += 1;
+              } else if (rad<=radius_baffle_cooling_holes+diag_dist) {
+                // face may be partially covered by inlet
+                amrex::Real area = square_circle_intersection_area(face_xlo, face_xhi, face_ylo, face_yhi, x_center_hole, y_center_hole, radius_baffle_cooling_holes);
+                if (area > 0.0) {
+                  amrex::Real area_frac = area * inv_area;
+                  s_ext[VELX] = 0.0;
                   s_ext[VELY] = 0.0;
-                  s_ext[VELZ] = vel_mag_bch*prob_parm.mfr_factor_bch;
+                  s_ext[VELZ] = vel_mag_bch*prob_parm.mfr_factor_bch * area_frac;
+                  in_inlet += 1;
                 }
+              }
             }
         }
 
     }
 
   //Model outer dome cooling holes
-  if(radius<=rmax_outer_dch and radius>=rmin_outer_dch)
+  if(radius<=rmax_outer_dch+diag_dist and radius>=rmin_outer_dch-diag_dist)
     {
-      for(amrex::Real theta=0.0;theta<360;theta=theta+delta_theta)
+      for(amrex::Real theta=0.0;theta<360-0.5*delta_theta;theta=theta+delta_theta)
         {
           amrex::Real theta_in_radians=theta*deg_to_radians;
           amrex::Real y_center_odch=radius_odchs*sin(theta_in_radians);
           amrex::Real x_center_odch=-radius_odchs*cos(theta_in_radians);
 
           amrex::Real rad=sqrt(std::pow((x[1]-y_center_odch),2.0)+pow((x[0]-x_center_odch),2.0));
-          amrex::Real nz = x[2]-odch_point0_normal[2];
+          amrex::Real nz = z_c-odch_point0_normal[2];
           amrex::Real ny = y_center_odch-odch_point0_normal[1];
           amrex::Real nx = x_center_odch-odch_point0_normal[0];
-          amrex::Real normal = sqrt(nx*nx+ny*ny+nz*nz);
-          nx=nx/normal;
-          ny=ny/normal;
-          nz=nz/normal;
+          amrex::Real abs_inv_nz = 1.0/std::abs(nz);
+          nx=nx*abs_inv_nz;
+          ny=ny*abs_inv_nz;
+          nz=nz*abs_inv_nz;
           //amrex::Print()<<"\n"<<theta<<" "<<x_center_odch<<" "<<y_center_odch<<" "<<x[2]<<" "<<nx<<" "<<ny<<" "<<nz;
-          if(rad<=radius_outer_dome_cooling_hole)
-            {
-              s_ext[VELX] = vel_mag_odch*nx*prob_parm.mfr_factor_odch;           //Dummy value. change it before prod run
+          if(rad<=radius_outer_dome_cooling_hole-diag_dist) {
+              s_ext[VELX] = vel_mag_odch*nx*prob_parm.mfr_factor_odch;
               s_ext[VELY] = vel_mag_odch*ny*prob_parm.mfr_factor_odch;
               s_ext[VELZ] = vel_mag_odch*nz*prob_parm.mfr_factor_odch;
+              in_inlet += 1;
+          } else if (rad<=radius_outer_dome_cooling_hole+diag_dist) {
+            amrex::Real area = square_circle_intersection_area(face_xlo, face_xhi, face_ylo, face_yhi, x_center_odch, y_center_odch, radius_outer_dome_cooling_hole);
+            if (area > 0.0) {
+              amrex::Real area_frac = area * inv_area;
+              s_ext[VELX] = vel_mag_odch*nx*prob_parm.mfr_factor_odch*area_frac;
+              s_ext[VELY] = vel_mag_odch*ny*prob_parm.mfr_factor_odch*area_frac;
+              s_ext[VELZ] = vel_mag_odch*nz*prob_parm.mfr_factor_odch*area_frac;
+              in_inlet += 1;
             }
+          }
         }
     }
 
   //Model inner dome cooling holes
-  if(radius<=rmax_inner_dch and radius>=rmin_inner_dch)
+  if(radius<=rmax_inner_dch+diag_dist and radius>=rmin_inner_dch-diag_dist)
     {
       for(amrex::Real theta=delta_theta/2.0;theta<360;theta=theta+delta_theta)
         {
@@ -567,33 +670,45 @@ bcnormal(
           amrex::Real y_center_idch=radius_idchs*sin(theta_in_radians);
           amrex::Real x_center_idch=-radius_idchs*cos(theta_in_radians);
           amrex::Real rad=sqrt(std::pow((x[1]-y_center_idch),2.0)+pow((x[0]-x_center_idch),2.0));
-          amrex::Real nz = x[2]-idch_point0_normal[2];
+          amrex::Real nz = z_c-idch_point0_normal[2];
           amrex::Real ny = y_center_idch-idch_point0_normal[1];
           amrex::Real nx = x_center_idch-idch_point0_normal[0];
-          amrex::Real normal = sqrt(nx*nx+ny*ny+nz*nz);
-          nx=nx/normal;
-          ny=ny/normal;
-          nz=nz/normal;
-          if(rad<=radius_inner_dome_cooling_hole)
-            {
-              s_ext[VELX] = vel_mag_idch*nx*prob_parm.mfr_factor_idch;           //Dummy value. change it before prod run
+          amrex::Real abs_inv_nz = 1.0/std::abs(nz);
+          nx=nx*abs_inv_nz;
+          ny=ny*abs_inv_nz;
+          nz=nz*abs_inv_nz;
+          if(rad<=radius_inner_dome_cooling_hole - diag_dist) {
+              s_ext[VELX] = vel_mag_idch*nx*prob_parm.mfr_factor_idch;
               s_ext[VELY] = vel_mag_idch*ny*prob_parm.mfr_factor_idch;
               s_ext[VELZ] = vel_mag_idch*nz*prob_parm.mfr_factor_idch;
+              in_inlet += 1;
+          } else if (rad<=radius_inner_dome_cooling_hole + diag_dist) {
+            amrex::Real area = square_circle_intersection_area(face_xlo, face_xhi, face_ylo, face_yhi, x_center_idch, y_center_idch, radius_inner_dome_cooling_hole);
+            if (area > 0.0) {
+              amrex::Real area_frac = area * inv_area;
+              s_ext[VELX] = vel_mag_idch*nx*prob_parm.mfr_factor_idch*area_frac;
+              s_ext[VELY] = vel_mag_idch*ny*prob_parm.mfr_factor_idch*area_frac;
+              s_ext[VELZ] = vel_mag_idch*nz*prob_parm.mfr_factor_idch*area_frac;
+              in_inlet += 1;
             }
+          }
         }
     }
 
+  // With the turb inflow stuff we can't apply correction
   if(radius<=rmax_pilot and radius>=rmin_pilot) //For the moment, only air
     {
       s_ext[VELX] = s_ext[VELX]*prob_parm.mfr_factor_pilot;
       s_ext[VELY] = s_ext[VELY]*prob_parm.mfr_factor_pilot;
       s_ext[VELZ] = s_ext[VELZ]*prob_parm.mfr_factor_pilot;
+      in_inlet += 1;
     }
   if(radius_cp00<=rmax_cp and radius_cp00>=rmin_cp)
     {
       s_ext[VELX] = s_ext[VELX]*prob_parm.mfr_factor_cp00;
       s_ext[VELY] = s_ext[VELY]*prob_parm.mfr_factor_cp00;
       s_ext[VELZ] = s_ext[VELZ]*prob_parm.mfr_factor_cp00;
+      in_inlet += 1;
       amrex::Real non_dim_r=(radius_cp00-rmin_cp)/(rmax_cp-rmin_cp);
       amrex::Real mixture_fraction =  CalculateMixtureFraction(non_dim_r);
 
@@ -617,6 +732,7 @@ bcnormal(
       s_ext[VELX] = s_ext[VELX]*prob_parm.mfr_factor_cp01;
       s_ext[VELY] = s_ext[VELY]*prob_parm.mfr_factor_cp01;
       s_ext[VELZ] = s_ext[VELZ]*prob_parm.mfr_factor_cp01;
+      in_inlet += 1;
       amrex::Real non_dim_r=(radius_cp01-rmin_cp)/(rmax_cp-rmin_cp);
       amrex::Real mixture_fraction =  CalculateMixtureFraction(non_dim_r);
 
@@ -640,6 +756,7 @@ bcnormal(
       s_ext[VELX] = s_ext[VELX]*prob_parm.mfr_factor_cp02;
       s_ext[VELY] = s_ext[VELY]*prob_parm.mfr_factor_cp02;
       s_ext[VELZ] = s_ext[VELZ]*prob_parm.mfr_factor_cp02;
+      in_inlet += 1;
       amrex::Real non_dim_r=(radius_cp02-rmin_cp)/(rmax_cp-rmin_cp);
       amrex::Real mixture_fraction = CalculateMixtureFraction(non_dim_r);
 
@@ -663,6 +780,7 @@ bcnormal(
       s_ext[VELX] = s_ext[VELX]*prob_parm.mfr_factor_cp03;
       s_ext[VELY] = s_ext[VELY]*prob_parm.mfr_factor_cp03;
       s_ext[VELZ] = s_ext[VELZ]*prob_parm.mfr_factor_cp03;
+      in_inlet += 1;
       amrex::Real non_dim_r=(radius_cp03-rmin_cp)/(rmax_cp-rmin_cp);
       amrex::Real mixture_fraction = CalculateMixtureFraction(non_dim_r);
 
@@ -682,6 +800,16 @@ bcnormal(
         }
     }
 
+  // Wall if we didn't catch anything above
+  if (in_inlet == 0) {
+    s_ext[VELX] = 0.0;
+    s_ext[VELY] = 0.0;
+    s_ext[VELZ] = 0.0;
+  } else if (in_inlet > 1) {
+    // We messed up if we caught more than one inlet
+    std::string abort_string = "bcnormal: point in more than one inlet.";
+    amrex::Abort(abort_string);
+  }
 }
 
 AMREX_GPU_DEVICE
