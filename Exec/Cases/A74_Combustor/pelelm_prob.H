@@ -362,9 +362,9 @@ bcnormal(
   amrex::Real massfrac[NUM_SPECIES] = {0.0};
 
     //Diffusion flame properties
-  amrex::Real Y_Fuel_0=1.0;
-  amrex::Real Y_O2_0=0.233;
-  amrex::Real Y_N2_0=0.767;
+  constexpr amrex::Real Y_Fuel_0=1.0;
+  constexpr amrex::Real Y_O2_0=0.233;
+  constexpr amrex::Real Y_N2_0=0.767;
 
   massfrac[O2_ID] = 0.233;
   massfrac[N2_ID] = 0.767;
@@ -407,90 +407,90 @@ bcnormal(
   bool use_strip_method_for_bafflecoolingholes=false;
 
   //Top baffle cooling holes
-  amrex::Real ymax_bch_top = (66.2178+0.79375)*0.001;   //bch->baffle cooling holes
-  amrex::Real ymin_bch_top = (66.2178-0.79375)*0.001;   //bch->baffle cooling holes
-  amrex::Real xmin_bch_top = -62.865*0.001;
-  amrex::Real xmax_bch_top =  62.865*0.001;
+  constexpr amrex::Real ymax_bch_top = (66.2178+0.79375)*0.001;   //bch->baffle cooling holes
+  constexpr amrex::Real ymin_bch_top = (66.2178-0.79375)*0.001;   //bch->baffle cooling holes
+  constexpr amrex::Real xmin_bch_top = -62.865*0.001;
+  constexpr amrex::Real xmax_bch_top =  62.865*0.001;
 
   //Bottom baffle cooling holes
-  amrex::Real ymax_bch_bot = (-66.2178-0.79375)*0.001;   //bch->baffle cooling holes
-  amrex::Real ymin_bch_bot = (-66.2178+0.79375)*0.001;   //bch->baffle cooling holes
-  amrex::Real xmin_bch_bot = -62.865*0.001;
-  amrex::Real xmax_bch_bot =  62.865*0.001;
+  constexpr amrex::Real ymax_bch_bot = (-66.2178-0.79375)*0.001;   //bch->baffle cooling holes
+  constexpr amrex::Real ymin_bch_bot = (-66.2178+0.79375)*0.001;   //bch->baffle cooling holes
+  constexpr amrex::Real xmin_bch_bot = -62.865*0.001;
+  constexpr amrex::Real xmax_bch_bot =  62.865*0.001;
 
   //front baffle cooling holes
-  amrex::Real xmax_bch_frt = (66.2178+0.79375)*0.001;   //bch->baffle cooling holes
-  amrex::Real xmin_bch_frt = (66.2178-0.79375)*0.001;   //bch->baffle cooling holes
-  amrex::Real ymin_bch_frt = -62.865*0.001;
-  amrex::Real ymax_bch_frt =  62.865*0.001;
+  constexpr amrex::Real xmax_bch_frt = (66.2178+0.79375)*0.001;   //bch->baffle cooling holes
+  constexpr amrex::Real xmin_bch_frt = (66.2178-0.79375)*0.001;   //bch->baffle cooling holes
+  constexpr amrex::Real ymin_bch_frt = -62.865*0.001;
+  constexpr amrex::Real ymax_bch_frt =  62.865*0.001;
 
   //back baffle cooling holes
-  amrex::Real xmax_bch_bak = (-66.2178-0.79375)*0.001;   //bch->baffle cooling holes
-  amrex::Real xmin_bch_bak = (-66.2178+0.79375)*0.001;   //bch->baffle cooling holes
-  amrex::Real ymin_bch_bak = -62.865*0.001;
-  amrex::Real ymax_bch_bak =  62.865*0.001;
+  constexpr amrex::Real xmax_bch_bak = (-66.2178-0.79375)*0.001;   //bch->baffle cooling holes
+  constexpr amrex::Real xmin_bch_bak = (-66.2178+0.79375)*0.001;   //bch->baffle cooling holes
+  constexpr amrex::Real ymin_bch_bak = -62.865*0.001;
+  constexpr amrex::Real ymax_bch_bak =  62.865*0.001;
 
   const int num_of_baffle_cooling_holes=34;
-  amrex::Real radius_baffle_cooling_holes=0.79375*0.001;
-  amrex::Real dist_between_bch=3.81*0.001;
+  constexpr amrex::Real radius_baffle_cooling_holes=0.79375*0.001;
+  constexpr amrex::Real dist_between_bch=3.81*0.001;
 
-  amrex::Real zvel_bch=100.0;
+  constexpr amrex::Real zvel_bch=100.0;
 
   //Outer dome cooling holes
-  amrex::Real radius_outer_dome_cooling_hole=0.4445*0.001;
+  constexpr amrex::Real radius_outer_dome_cooling_hole=0.4445*0.001;
   constexpr amrex::Real radius_odchs=64.18579658*0.001;
-  amrex::Real rmax_outer_dch=radius_odchs+radius_outer_dome_cooling_hole;
-  amrex::Real rmin_outer_dch=radius_odchs-radius_outer_dome_cooling_hole;
-  int num_of_outer_dch=52;
-  amrex::Real delta_theta=360.0/52.0;
-  amrex::Array<amrex::Real,3> odch_point0_normal     ={0.0,0.0,0.7244707034};
+  constexpr amrex::Real rmax_outer_dch=radius_odchs+radius_outer_dome_cooling_hole;
+  constexpr amrex::Real rmin_outer_dch=radius_odchs-radius_outer_dome_cooling_hole;
+  constexpr int num_of_outer_dch=52;
+  constexpr amrex::Real delta_theta=360.0/52.0;
+  constexpr amrex::Array<amrex::Real,3> odch_point0_normal     ={0.0,0.0,0.7244707034};
 
   //Inner dome cooling holes
-  amrex::Real radius_inner_dome_cooling_hole=0.8255*0.001;
+  constexpr amrex::Real radius_inner_dome_cooling_hole=0.8255*0.001;
   constexpr amrex::Real radius_idchs=58.42*0.001;
-  amrex::Real rmax_inner_dch=radius_idchs+radius_inner_dome_cooling_hole;
-  amrex::Real rmin_inner_dch=radius_idchs-radius_inner_dome_cooling_hole;
-  int num_of_inner_dch=52;
-  amrex::Array<amrex::Real,3> idch_point0_normal     ={0.0,0.0,0.7095693667};
+  constexpr amrex::Real rmax_inner_dch=radius_idchs+radius_inner_dome_cooling_hole;
+  constexpr amrex::Real rmin_inner_dch=radius_idchs-radius_inner_dome_cooling_hole;
+  constexpr int num_of_inner_dch=52;
+  constexpr amrex::Array<amrex::Real,3> idch_point0_normal     ={0.0,0.0,0.7095693667};
 
   constexpr amrex::Real lbm_to_kg=0.453592;
   constexpr amrex::Real mfr_idch=0.02416*lbm_to_kg;
   constexpr amrex::Real mfr_odch=0.06464*lbm_to_kg;
   constexpr amrex::Real mfr_bch=0.09*2*lbm_to_kg;
 
-  amrex::Real area_per_odch=Pi*(radius_outer_dome_cooling_hole)*(radius_outer_dome_cooling_hole);
-  amrex::Real area_per_idch=Pi*(radius_inner_dome_cooling_hole)*(radius_inner_dome_cooling_hole);
-  amrex::Real area_per_bch =Pi*(radius_baffle_cooling_holes)*(radius_baffle_cooling_holes);
+  constexpr amrex::Real area_per_odch=Pi*(radius_outer_dome_cooling_hole)*(radius_outer_dome_cooling_hole);
+  constexpr amrex::Real area_per_idch=Pi*(radius_inner_dome_cooling_hole)*(radius_inner_dome_cooling_hole);
+  constexpr amrex::Real area_per_bch =Pi*(radius_baffle_cooling_holes)*(radius_baffle_cooling_holes);
 
-  amrex::Real vel_mag_odch=mfr_odch/(area_per_odch*s_ext[DENSITY]*num_of_outer_dch);
-  amrex::Real vel_mag_idch=mfr_idch/(area_per_idch*s_ext[DENSITY]*num_of_inner_dch);
-  amrex::Real vel_mag_bch=mfr_bch/(area_per_bch*s_ext[DENSITY]*num_of_baffle_cooling_holes*4);
+  const amrex::Real vel_mag_odch=mfr_odch/(area_per_odch*s_ext[DENSITY]*num_of_outer_dch);
+  const amrex::Real vel_mag_idch=mfr_idch/(area_per_idch*s_ext[DENSITY]*num_of_inner_dch);
+  const amrex::Real vel_mag_bch=mfr_bch/(area_per_bch*s_ext[DENSITY]*num_of_baffle_cooling_holes*4);
 
   //amrex::Real vel_mag_odch=0.0;
   //amrex::Real vel_mag_idch=0.0;
   //amrex::Real vel_mag_bch=0.0;
-  amrex::Real rmax_pilot = 0.005080;
-  amrex::Real rmin_pilot = 0.0;
+  constexpr amrex::Real rmax_pilot = 0.005080;
+  constexpr amrex::Real rmin_pilot = 0.0;
 
-  amrex::Real x_cp_00 = -0.0163322;
-  amrex::Real y_cp_00 = 0.0163322;
+  constexpr amrex::Real x_cp_00 = -0.0163322;
+  constexpr amrex::Real y_cp_00 = 0.0163322;
 
-  amrex::Real x_cp_01 = 0.0163322;
-  amrex::Real y_cp_01 = 0.0163322;
+  constexpr amrex::Real x_cp_01 = 0.0163322;
+  constexpr amrex::Real y_cp_01 = 0.0163322;
 
-  amrex::Real x_cp_02 = -0.0163322;
-  amrex::Real y_cp_02 = -0.0163322;
+  constexpr amrex::Real x_cp_02 = -0.0163322;
+  constexpr amrex::Real y_cp_02 = -0.0163322;
 
-  amrex::Real x_cp_03 = 0.0163322;
-  amrex::Real y_cp_03 = -0.0163322;
+  constexpr amrex::Real x_cp_03 = 0.0163322;
+  constexpr amrex::Real y_cp_03 = -0.0163322;
 
-  amrex::Real rmax_cp = 0.0083312;
-  amrex::Real rmin_cp = 0.0057404;
+  constexpr amrex::Real rmax_cp = 0.0083312;
+  constexpr amrex::Real rmin_cp = 0.0057404;
 
-  amrex::Real radius_cp00 = sqrt(std::pow((x[0]-x_cp_00),2.0)+pow((x[1]-y_cp_00),2.0));
-  amrex::Real radius_cp01 = sqrt(std::pow((x[0]-x_cp_01),2.0)+pow((x[1]-y_cp_01),2.0));
-  amrex::Real radius_cp02 = sqrt(std::pow((x[0]-x_cp_02),2.0)+pow((x[1]-y_cp_02),2.0));
-  amrex::Real radius_cp03 = sqrt(std::pow((x[0]-x_cp_03),2.0)+pow((x[1]-y_cp_03),2.0));
+  const amrex::Real radius_cp00 = sqrt(std::pow((x[0]-x_cp_00),2.0)+pow((x[1]-y_cp_00),2.0));
+  const amrex::Real radius_cp01 = sqrt(std::pow((x[0]-x_cp_01),2.0)+pow((x[1]-y_cp_01),2.0));
+  const amrex::Real radius_cp02 = sqrt(std::pow((x[0]-x_cp_02),2.0)+pow((x[1]-y_cp_02),2.0));
+  const amrex::Real radius_cp03 = sqrt(std::pow((x[0]-x_cp_03),2.0)+pow((x[1]-y_cp_03),2.0));
 
   const amrex::Real* dx      = geomdata.CellSize();
   const amrex::Real diag_dist = 0.5*sqrt(dx[0]*dx[0] + dx[1]*dx[1]);
@@ -522,9 +522,9 @@ bcnormal(
         {
           for(int i=0;i<num_of_baffle_cooling_holes;i++)
             {
-              amrex::Real y_center_hole=0.5*(ymin_bch_top+ymax_bch_top);
-              amrex::Real x_center_hole=xmin_bch_top+i*dist_between_bch;
-              amrex::Real rad=sqrt(std::pow((x[1]-y_center_hole),2.0)+pow((x[0]-x_center_hole),2.0));
+              const amrex::Real y_center_hole=0.5*(ymin_bch_top+ymax_bch_top);
+              const amrex::Real x_center_hole=xmin_bch_top+i*dist_between_bch;
+              const amrex::Real rad=sqrt(std::pow((x[1]-y_center_hole),2.0)+pow((x[0]-x_center_hole),2.0));
               if(rad<=radius_baffle_cooling_holes-diag_dist) {
                 // face is fully in inlet
                 s_ext[VELX] = 0.0;
@@ -533,9 +533,9 @@ bcnormal(
                 in_inlet += 1;
               } else if (rad<=radius_baffle_cooling_holes+diag_dist) {
                 // face may be partially covered by inlet
-                amrex::Real area = square_circle_intersection_area(face_xlo, face_xhi, face_ylo, face_yhi, x_center_hole, y_center_hole, radius_baffle_cooling_holes);
+                const amrex::Real area = square_circle_intersection_area(face_xlo, face_xhi, face_ylo, face_yhi, x_center_hole, y_center_hole, radius_baffle_cooling_holes);
                 if (area > 0.0) {
-                  amrex::Real area_frac = area * inv_area;
+                  const amrex::Real area_frac = area * inv_area;
                   s_ext[VELX] = 0.0;
                   s_ext[VELY] = 0.0;
                   s_ext[VELZ] = vel_mag_bch*prob_parm.mfr_factor_bch * area_frac;
@@ -548,9 +548,9 @@ bcnormal(
         {
           for(int i=0;i<num_of_baffle_cooling_holes;i++)
             {
-              amrex::Real y_center_hole=0.5*(ymin_bch_bot+ymax_bch_bot);
-              amrex::Real x_center_hole=xmin_bch_bot+i*dist_between_bch;
-              amrex::Real rad=sqrt(std::pow((x[1]-y_center_hole),2.0)+pow((x[0]-x_center_hole),2.0));
+              const amrex::Real y_center_hole=0.5*(ymin_bch_bot+ymax_bch_bot);
+              const amrex::Real x_center_hole=xmin_bch_bot+i*dist_between_bch;
+              const amrex::Real rad=sqrt(std::pow((x[1]-y_center_hole),2.0)+pow((x[0]-x_center_hole),2.0));
               if(rad<=radius_baffle_cooling_holes-diag_dist) {
                 // face is fully in inlet
                 s_ext[VELX] = 0.0;
@@ -559,9 +559,9 @@ bcnormal(
                 in_inlet += 1;
               } else if (rad<=radius_baffle_cooling_holes+diag_dist) {
                 // face may be partially covered by inlet
-                amrex::Real area = square_circle_intersection_area(face_xlo, face_xhi, face_ylo, face_yhi, x_center_hole, y_center_hole, radius_baffle_cooling_holes);
+                const amrex::Real area = square_circle_intersection_area(face_xlo, face_xhi, face_ylo, face_yhi, x_center_hole, y_center_hole, radius_baffle_cooling_holes);
                 if (area > 0.0) {
-                  amrex::Real area_frac = area * inv_area;
+                  const amrex::Real area_frac = area * inv_area;
                   s_ext[VELX] = 0.0;
                   s_ext[VELY] = 0.0;
                   s_ext[VELZ] = vel_mag_bch*prob_parm.mfr_factor_bch * area_frac;
@@ -574,9 +574,9 @@ bcnormal(
         {
           for(int i=0;i<num_of_baffle_cooling_holes;i++)
             {
-              amrex::Real y_center_hole=ymin_bch_frt+i*dist_between_bch;
-              amrex::Real x_center_hole=0.5*(xmin_bch_frt+xmax_bch_frt);
-              amrex::Real rad=sqrt(std::pow((x[1]-y_center_hole),2.0)+pow((x[0]-x_center_hole),2.0));
+              const amrex::Real y_center_hole=ymin_bch_frt+i*dist_between_bch;
+              const amrex::Real x_center_hole=0.5*(xmin_bch_frt+xmax_bch_frt);
+              const amrex::Real rad=sqrt(std::pow((x[1]-y_center_hole),2.0)+pow((x[0]-x_center_hole),2.0));
               if(rad<=radius_baffle_cooling_holes-diag_dist) {
                 // face is fully in inlet
                 s_ext[VELX] = 0.0;
@@ -585,9 +585,9 @@ bcnormal(
                 in_inlet += 1;
               } else if (rad<=radius_baffle_cooling_holes+diag_dist) {
                 // face may be partially covered by inlet
-                amrex::Real area = square_circle_intersection_area(face_xlo, face_xhi, face_ylo, face_yhi, x_center_hole, y_center_hole, radius_baffle_cooling_holes);
+                const amrex::Real area = square_circle_intersection_area(face_xlo, face_xhi, face_ylo, face_yhi, x_center_hole, y_center_hole, radius_baffle_cooling_holes);
                 if (area > 0.0) {
-                  amrex::Real area_frac = area * inv_area;
+                  const amrex::Real area_frac = area * inv_area;
                   s_ext[VELX] = 0.0;
                   s_ext[VELY] = 0.0;
                   s_ext[VELZ] = vel_mag_bch*prob_parm.mfr_factor_bch * area_frac;
@@ -600,9 +600,9 @@ bcnormal(
         {
           for(int i=0;i<num_of_baffle_cooling_holes;i++)
             {
-              amrex::Real y_center_hole=ymin_bch_bak+i*dist_between_bch;
-              amrex::Real x_center_hole=0.5*(xmin_bch_bak+xmax_bch_bak);
-              amrex::Real rad=sqrt(std::pow((x[1]-y_center_hole),2.0)+pow((x[0]-x_center_hole),2.0));
+              const amrex::Real y_center_hole=ymin_bch_bak+i*dist_between_bch;
+              const amrex::Real x_center_hole=0.5*(xmin_bch_bak+xmax_bch_bak);
+              const amrex::Real rad=sqrt(std::pow((x[1]-y_center_hole),2.0)+pow((x[0]-x_center_hole),2.0));
               if(rad<=radius_baffle_cooling_holes-diag_dist) {
                 // face is fully in inlet
                 s_ext[VELX] = 0.0;
@@ -611,9 +611,9 @@ bcnormal(
                 in_inlet += 1;
               } else if (rad<=radius_baffle_cooling_holes+diag_dist) {
                 // face may be partially covered by inlet
-                amrex::Real area = square_circle_intersection_area(face_xlo, face_xhi, face_ylo, face_yhi, x_center_hole, y_center_hole, radius_baffle_cooling_holes);
+                const amrex::Real area = square_circle_intersection_area(face_xlo, face_xhi, face_ylo, face_yhi, x_center_hole, y_center_hole, radius_baffle_cooling_holes);
                 if (area > 0.0) {
-                  amrex::Real area_frac = area * inv_area;
+                  const amrex::Real area_frac = area * inv_area;
                   s_ext[VELX] = 0.0;
                   s_ext[VELY] = 0.0;
                   s_ext[VELZ] = vel_mag_bch*prob_parm.mfr_factor_bch * area_frac;
@@ -630,15 +630,15 @@ bcnormal(
     {
       for(amrex::Real theta=0.0;theta<360-0.5*delta_theta;theta=theta+delta_theta)
         {
-          amrex::Real theta_in_radians=theta*deg_to_radians;
-          amrex::Real y_center_odch=radius_odchs*sin(theta_in_radians);
-          amrex::Real x_center_odch=-radius_odchs*cos(theta_in_radians);
+          const amrex::Real theta_in_radians=theta*deg_to_radians;
+          const amrex::Real y_center_odch=radius_odchs*sin(theta_in_radians);
+          const amrex::Real x_center_odch=-radius_odchs*cos(theta_in_radians);
 
-          amrex::Real rad=sqrt(std::pow((x[1]-y_center_odch),2.0)+pow((x[0]-x_center_odch),2.0));
+          const amrex::Real rad=sqrt(std::pow((x[1]-y_center_odch),2.0)+pow((x[0]-x_center_odch),2.0));
           amrex::Real nz = z_c-odch_point0_normal[2];
           amrex::Real ny = y_center_odch-odch_point0_normal[1];
           amrex::Real nx = x_center_odch-odch_point0_normal[0];
-          amrex::Real abs_inv_nz = 1.0/std::abs(nz);
+          const amrex::Real abs_inv_nz = 1.0/std::abs(nz);
           nx=nx*abs_inv_nz;
           ny=ny*abs_inv_nz;
           nz=nz*abs_inv_nz;
@@ -649,9 +649,9 @@ bcnormal(
               s_ext[VELZ] = vel_mag_odch*nz*prob_parm.mfr_factor_odch;
               in_inlet += 1;
           } else if (rad<=radius_outer_dome_cooling_hole+diag_dist) {
-            amrex::Real area = square_circle_intersection_area(face_xlo, face_xhi, face_ylo, face_yhi, x_center_odch, y_center_odch, radius_outer_dome_cooling_hole);
+            const amrex::Real area = square_circle_intersection_area(face_xlo, face_xhi, face_ylo, face_yhi, x_center_odch, y_center_odch, radius_outer_dome_cooling_hole);
             if (area > 0.0) {
-              amrex::Real area_frac = area * inv_area;
+              const amrex::Real area_frac = area * inv_area;
               s_ext[VELX] = vel_mag_odch*nx*prob_parm.mfr_factor_odch*area_frac;
               s_ext[VELY] = vel_mag_odch*ny*prob_parm.mfr_factor_odch*area_frac;
               s_ext[VELZ] = vel_mag_odch*nz*prob_parm.mfr_factor_odch*area_frac;
@@ -666,14 +666,14 @@ bcnormal(
     {
       for(amrex::Real theta=delta_theta/2.0;theta<360;theta=theta+delta_theta)
         {
-          amrex::Real theta_in_radians=theta*deg_to_radians;
-          amrex::Real y_center_idch=radius_idchs*sin(theta_in_radians);
-          amrex::Real x_center_idch=-radius_idchs*cos(theta_in_radians);
-          amrex::Real rad=sqrt(std::pow((x[1]-y_center_idch),2.0)+pow((x[0]-x_center_idch),2.0));
+          const amrex::Real theta_in_radians=theta*deg_to_radians;
+          const amrex::Real y_center_idch=radius_idchs*sin(theta_in_radians);
+          const amrex::Real x_center_idch=-radius_idchs*cos(theta_in_radians);
+          const amrex::Real rad=sqrt(std::pow((x[1]-y_center_idch),2.0)+pow((x[0]-x_center_idch),2.0));
           amrex::Real nz = z_c-idch_point0_normal[2];
           amrex::Real ny = y_center_idch-idch_point0_normal[1];
           amrex::Real nx = x_center_idch-idch_point0_normal[0];
-          amrex::Real abs_inv_nz = 1.0/std::abs(nz);
+          const amrex::Real abs_inv_nz = 1.0/std::abs(nz);
           nx=nx*abs_inv_nz;
           ny=ny*abs_inv_nz;
           nz=nz*abs_inv_nz;
@@ -683,9 +683,9 @@ bcnormal(
               s_ext[VELZ] = vel_mag_idch*nz*prob_parm.mfr_factor_idch;
               in_inlet += 1;
           } else if (rad<=radius_inner_dome_cooling_hole + diag_dist) {
-            amrex::Real area = square_circle_intersection_area(face_xlo, face_xhi, face_ylo, face_yhi, x_center_idch, y_center_idch, radius_inner_dome_cooling_hole);
+            const amrex::Real area = square_circle_intersection_area(face_xlo, face_xhi, face_ylo, face_yhi, x_center_idch, y_center_idch, radius_inner_dome_cooling_hole);
             if (area > 0.0) {
-              amrex::Real area_frac = area * inv_area;
+              const amrex::Real area_frac = area * inv_area;
               s_ext[VELX] = vel_mag_idch*nx*prob_parm.mfr_factor_idch*area_frac;
               s_ext[VELY] = vel_mag_idch*ny*prob_parm.mfr_factor_idch*area_frac;
               s_ext[VELZ] = vel_mag_idch*nz*prob_parm.mfr_factor_idch*area_frac;
@@ -709,8 +709,8 @@ bcnormal(
       s_ext[VELY] = s_ext[VELY]*prob_parm.mfr_factor_cp00;
       s_ext[VELZ] = s_ext[VELZ]*prob_parm.mfr_factor_cp00;
       in_inlet += 1;
-      amrex::Real non_dim_r=(radius_cp00-rmin_cp)/(rmax_cp-rmin_cp);
-      amrex::Real mixture_fraction =  CalculateMixtureFraction(non_dim_r);
+      const amrex::Real non_dim_r=(radius_cp00-rmin_cp)/(rmax_cp-rmin_cp);
+      const amrex::Real mixture_fraction =  CalculateMixtureFraction(non_dim_r);
 
       massfrac[NC12H26_ID] = mixture_fraction*Y_Fuel_0;
       massfrac[O2_ID] = Y_O2_0*(1-mixture_fraction);
@@ -733,8 +733,8 @@ bcnormal(
       s_ext[VELY] = s_ext[VELY]*prob_parm.mfr_factor_cp01;
       s_ext[VELZ] = s_ext[VELZ]*prob_parm.mfr_factor_cp01;
       in_inlet += 1;
-      amrex::Real non_dim_r=(radius_cp01-rmin_cp)/(rmax_cp-rmin_cp);
-      amrex::Real mixture_fraction =  CalculateMixtureFraction(non_dim_r);
+      const amrex::Real non_dim_r=(radius_cp01-rmin_cp)/(rmax_cp-rmin_cp);
+      const amrex::Real mixture_fraction =  CalculateMixtureFraction(non_dim_r);
 
       massfrac[NC12H26_ID] = mixture_fraction*Y_Fuel_0;
       massfrac[O2_ID] = Y_O2_0*(1-mixture_fraction);
@@ -757,8 +757,8 @@ bcnormal(
       s_ext[VELY] = s_ext[VELY]*prob_parm.mfr_factor_cp02;
       s_ext[VELZ] = s_ext[VELZ]*prob_parm.mfr_factor_cp02;
       in_inlet += 1;
-      amrex::Real non_dim_r=(radius_cp02-rmin_cp)/(rmax_cp-rmin_cp);
-      amrex::Real mixture_fraction = CalculateMixtureFraction(non_dim_r);
+      const amrex::Real non_dim_r=(radius_cp02-rmin_cp)/(rmax_cp-rmin_cp);
+      const amrex::Real mixture_fraction = CalculateMixtureFraction(non_dim_r);
 
       massfrac[NC12H26_ID] = mixture_fraction*Y_Fuel_0;
       massfrac[O2_ID] = Y_O2_0*(1-mixture_fraction);
@@ -781,8 +781,8 @@ bcnormal(
       s_ext[VELY] = s_ext[VELY]*prob_parm.mfr_factor_cp03;
       s_ext[VELZ] = s_ext[VELZ]*prob_parm.mfr_factor_cp03;
       in_inlet += 1;
-      amrex::Real non_dim_r=(radius_cp03-rmin_cp)/(rmax_cp-rmin_cp);
-      amrex::Real mixture_fraction = CalculateMixtureFraction(non_dim_r);
+      const amrex::Real non_dim_r=(radius_cp03-rmin_cp)/(rmax_cp-rmin_cp);
+      const amrex::Real mixture_fraction = CalculateMixtureFraction(non_dim_r);
 
       massfrac[NC12H26_ID] = mixture_fraction*Y_Fuel_0;
       massfrac[O2_ID] = Y_O2_0*(1-mixture_fraction);
