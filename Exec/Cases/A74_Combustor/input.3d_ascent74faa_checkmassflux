@@ -1,0 +1,218 @@
+#----------------------DOMAIN DEFINITION------------------------
+geometry.is_periodic = 0 0 0               # For each dir, 0: non-perio, 1: periodic
+geometry.coord_sys   = 0                  # 0 => cart, 1 => RZ
+geometry.prob_lo     = -0.0672465 -0.0672465 0.7886565       # x_lo y_lo (z_lo)
+geometry.prob_hi     =  0.0672465  0.0672465 0.8222797500         # x_hi y_hi (z_hi)
+
+#dx (for 64 elements across sq side) = 2.101453125e-3, L = 0.537972
+# >>>>>>>>>>>>>  BC FLAGS <<<<<<<<<<<<<<<<
+# Interior, Inflow, Outflow, Symmetry,
+# SlipWallAdiab, NoSlipWallAdiab, SlipWallIsotherm, NoSlipWallIsotherm
+peleLM.lo_bc = NoSlipWallAdiab NoSlipWallAdiab Inflow
+peleLM.hi_bc = NoSlipWallAdiab NoSlipWallAdiab Outflow
+
+
+#-------------------------AMR CONTROL----------------------------
+amr.n_cell          = 64 64 16      # Level 0 number of cells in each direction
+amr.v               = 1                # AMR verbose
+amr.max_level       = 3                # maximum level number allowed
+amr.ref_ratio       = 2 2 2 2 2        # refinement ratio
+amr.regrid_int      = 5                  # how often to regrid
+amr.n_error_buf     = 2 2 4 4          # number of buffer cells in error est
+amr.grid_eff        = 0.7             # what constitutes an efficient grid
+amr.blocking_factor = 16               # block factor in grid generation (min box size)~ 16 is better
+amr.max_grid_size   = 64               # max box size
+
+#--------------------------- Problem -------------------------------
+prob.P_mean = 772213.0
+prob.T_mean = 683.15
+prob.ignite = 0
+prob.ignite_lowZ = 0.014
+prob.ignite_rad = 0.012
+prob.ignite_temp = 1700.0
+
+#-------------------------PeleLM CONTROL----------------------------
+peleLM.v = 3
+peleLM.incompressible = 0
+peleLM.rho = 1.17
+peleLM.mu = 0.0
+peleLM.use_wbar = 1
+peleLM.sdc_iterMax = 2
+peleLM.floor_species = 1
+peleLM.num_divu_iter = 1
+peleLM.num_init_iter = 2
+
+prob.mfr_factor_idch = 1.0 #0.91         #0.91
+prob.mfr_factor_odch = 1.0 #0.35         #0.35
+prob.mfr_factor_bch  = 1.0 #1.1483         #1.1483
+prob.mfr_factor_pilot= 0.0 #0.83         #0.83
+prob.mfr_factor_cp00 = 0.0 #0.94         #0.94
+prob.mfr_factor_cp01 = 0.0 #0.94         #0.94
+prob.mfr_factor_cp02 = 0.0 #0.94         #0.94
+prob.mfr_factor_cp03 = 0.0 #0.94         #0.94
+
+peleLM.do_temporals = 1
+peleLM.temporal_int = 1
+peleLM.do_mass_balance = 1
+peleLM.max_grid_size_chem = 32
+
+#amr.restart = chk11200
+amr.check_int = 50
+amr.plot_int = 50
+amr.max_step = 1000000
+amr.dt_shrink = 0.01
+amr.stop_time = 1.0
+#amr.stop_time = 1.00
+amr.init_dt = 1.0e-5
+amr.cfl = 0.25
+amr.derive_plot_vars = avg_pressure mag_vort mass_fractions derUserDefined Qcrit
+
+# --------------- INPUTS TO CHEMISTRY REACTOR ---------------
+peleLM.chem_integrator = "ReactorNull"
+peleLM.use_typ_vals_chem = 1          # Use species/temp typical values in CVODE
+ode.rtol = 1.0e-6                     # Relative tolerance of the chemical solve
+ode.atol = 1.0e-5                     # Absolute tolerance factor applied on typical values
+ode.clean_init_massfrac = 0
+cvode.solve_type = magma_direct       # CVODE Linear solve type (for Newton direction)
+cvode.max_order  = 2                  # CVODE max BDF order.
+
+#--------------------------- Turbulence -------------------------------
+# NOTE: the centers must be consistent with the injection data provided
+# above.
+turbinflows= inj0 inj1 inj1 inj2 inj3 inj4
+
+turbinflow.inj0.turb_file      = Turb_PILOT
+turbinflow.inj0.dir            = 2
+turbinflow.inj0.side           = low
+turbinflow.inj0.turb_scale_loc = 1.0
+turbinflow.inj0.turb_scale_vel = 1.0
+turbinflow.inj0.turb_center    = 0.0 0.0
+turbinflow.inj0.turb_conv_vel  = 0.0
+turbinflow.inj0.turb_nplane    = 8
+turbinflow.inj0.time_offset    = 0.0
+
+turbinflow.inj1.turb_file      = Turb_CP00
+turbinflow.inj1.dir            = 2
+turbinflow.inj1.side           = low
+turbinflow.inj1.turb_scale_loc = 1.0
+turbinflow.inj1.turb_scale_vel = 1.0
+turbinflow.inj1.turb_center    = -0.0163322 0.0163322
+turbinflow.inj1.turb_conv_vel  = 0.0
+turbinflow.inj1.turb_nplane    = 8
+turbinflow.inj1.time_offset    = 0.0
+
+turbinflow.inj2.turb_file      = Turb_CP01
+turbinflow.inj2.dir            = 2
+turbinflow.inj2.side           = low
+turbinflow.inj2.turb_scale_loc = 1.0
+turbinflow.inj2.turb_scale_vel = 1.0
+turbinflow.inj2.turb_center    = 0.0163322 0.0163322
+turbinflow.inj2.turb_conv_vel  = 0.0
+turbinflow.inj2.turb_nplane    = 8
+turbinflow.inj2.time_offset    = 0.0
+
+turbinflow.inj3.turb_file      = Turb_CP02
+turbinflow.inj3.dir            = 2
+turbinflow.inj3.side           = low
+turbinflow.inj3.turb_scale_loc = 1.0
+turbinflow.inj3.turb_scale_vel = 1.0
+turbinflow.inj3.turb_center    = -0.0163322 -0.0163322
+turbinflow.inj3.turb_conv_vel  = 0.0
+turbinflow.inj3.turb_nplane    = 8
+turbinflow.inj3.time_offset    = 0.0
+
+turbinflow.inj4.turb_file      = Turb_CP03
+turbinflow.inj4.dir            = 2
+turbinflow.inj4.side           = low
+turbinflow.inj4.turb_scale_loc = 1.0
+turbinflow.inj4.turb_scale_vel = 1.0
+turbinflow.inj4.turb_center    = 0.0163322 -0.0163322
+turbinflow.inj4.turb_conv_vel  = 0.0
+turbinflow.inj4.turb_nplane    = 8
+turbinflow.inj4.time_offset    = 0.0
+
+#------------------------- EB SETUP -----------------------------
+eb2.geom_type = "all_regular"
+eb2.geom_version = "Simple"
+eb2.small_volfrac = 1.e-5
+eb2.maxiter = 1000
+eb2.num_coarsen_opt=2
+peleLM.refine_EB_type = Static
+peleLM.refine_EB_max_level = 0
+peleLM.refine_EB_buffer = 2.0
+
+#--------------------SPRAY PARTICLE DATA-----------------------
+peleLM.do_spray_particles = 0
+particles.v = 2
+particles.plot_src = 1
+particles.mom_transfer = 1
+particles.mass_transfer = 1
+particles.init_function = 1 # Sprays are initialized using SprayParticleInitInsert.cpp
+#particles.init_file = spray00500.p3d
+#particles.write_ascii_files = 1
+particles.parcel_size = 2. # Number of particles per parcel
+particles.fuel_species = NC12H26
+particles.fuel_ref_temp = 298.15
+particles.cfl = 0.5
+
+# Properties for liquid decane
+particles.NC12H26_crit_temp = 658.2 # K
+particles.NC12H26_boil_temp = 469.52 # K
+particles.NC12H26_latent = 3.1e5
+particles.NC12H26_cp = 1.96277E3 # Cp at 298
+particles.NC12H26_rho = 819.0
+# Coefficients for saturation pressure using Antoine equation
+# These are from the NIST website
+# Last coefficient converts units, in this case bar, to Pa
+particles.NC12H26_psat = 4.10549 1625.928 -92.839 1.E5
+
+particles.use_splash_model = false
+
+#--------------------REFINEMENT CONTROL------------------------
+amr.refinement_indicators = magVort tagJets boxInflows highT #highCO
+amr.magVort.max_level     = 3
+amr.magVort.value_greater = 50000.0
+amr.magVort.field_name    = mag_vort
+
+amr.tagJets.max_level     = 3
+amr.tagJets.value_greater = 0.5
+amr.tagJets.field_name    = tagCoolingJets
+
+amr.boxInflows.max_level     = 4
+amr.boxInflows.in_box_lo = -0.02 -0.02 0.7886565
+amr.boxInflows.in_box_hi = 0.02 0.02 0.790
+
+#amr.highCO.max_level     = 3
+#amr.highCO.value_greater = 0.12
+#amr.highCO.field_name    = Y(CO)
+
+amr.highT.max_level     = 2
+amr.highT.value_greater = 1100.0
+amr.highT.field_name    = temp
+
+peleLM.diagnostics = xnormal ynormal
+peleLM.xnormal.type = DiagFramePlane
+peleLM.xnormal.file = premXPlane
+peleLM.xnormal.normal = 0
+peleLM.xnormal.center = 0.0163322
+peleLM.xnormal.int    = 50
+peleLM.xnormal.interpolation = Linear
+peleLM.xnormal.field_names = x_velocity y_velocity z_velocity mag_vort temp HeatRelease Y(NC12H26)  density
+peleLM.ynormal.type = DiagFramePlane
+peleLM.ynormal.file = premYPlane
+peleLM.ynormal.normal = 1
+peleLM.ynormal.center = 0.0163322
+peleLM.ynormal.int    = 50
+peleLM.ynormal.interpolation = Linear
+peleLM.ynormal.field_names = x_velocity y_velocity z_velocity mag_vort temp HeatRelease Y(NC12H26) density
+
+mac_proj.verbose = 2                        # [OPT, DEF=0] Verbose of the MAC projector
+
+#--------------------LINEAR SOLVER CONTROL------------------------
+nodal_proj.verbose = 2
+
+amrex.abort_on_out_of_gpu_memory = 1
+
+#amrex.fpe_trap_invalid = 1
+#amrex.fpe_trap_zero = 1
+#amrex.fpe_trap_overflow = 1
